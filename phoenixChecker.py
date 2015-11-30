@@ -15,7 +15,8 @@ class phoenixChecker(object):
         self.email = email
 
         self.numDenom = [[0 for j in range(2)] for i in range(7)]
-        
+        self.grades = [['' for j in range(2)] for i in range(7)]
+
         self.update()
 
     def setUsername(self, user):#sets username
@@ -33,10 +34,7 @@ class phoenixChecker(object):
         self.update()
         
         #print old and new versions
-        now = datetime.datetime.now()
-        print('*'*16 + 'new version' + '*'*16)
         self.printGrades(self.gradeTable, self.numDenom)
-        print('*'*43)
         
         #if different, emails differences
         if tempNum != self.numDenom:
@@ -98,22 +96,32 @@ class phoenixChecker(object):
         req =  BeautifulSoup(gradeBook.text, 'lxml')
         self.gradeTable = req.findAll('table', {'class':'info_tbl'})
         
+        count = 0
+
+        for i in range(len(self.gradeTable)):
+             
+             rows = self.gradeTable[i].findAll('tr')
+             for tr in rows[i + 1:]:
+                 cols = tr.findAll('td')
+                 courseTitle = cols[1].text
+                 mp2 = cols[5].text
+                 
+                 parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
+                 
+                 self.grades[count][0] = parenMinus.group()
+                 self.grades[count][1] = mp2
+
+                 count += 1
+        
         self.updateNumDenom()
 
     def printGrades(self, table, nums):#prints summary of grades
-        for i in range(len(table)):
-            count = 0
-
-            rows = table[i].findAll('tr')
-            for tr in rows[i + 1:]:
-                cols = tr.findAll('td')
-                courseTitle = cols[1].text
-                mp2 = cols[5].text
-                
-                parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
-                parseGrade = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',mp2)
-                print (parenMinus.group() +':' + '\t'*(3 - int( len(parenMinus.group())/8)) + mp2 +' (' +str(nums[count][0]) + '/' + str(nums[count][1]) + ')')
-                count += 1
+        now = datetime.datetime.now()
+        print('*'*16 + 'new version' + '*'*16)
+        
+        for i in range(len(self.grades)):
+            print(self.grades[i][0] + ': ' + '\t'*(3 - int((len(self.grades[i][0])+2)/8))+ str(self.grades[i][1]) + ' (' + str(self.numDenom[i][0]) + '/' + str(self.numDenom[i][1]) + ')')
+        print('*'*43)
 
     def sendMail(self, message):#sends emai
         server = smtplib.SMTP('smtp.gmail.com')
@@ -123,10 +131,9 @@ class phoenixChecker(object):
         server.quit()
 
     def updateNumDenom(self):#updates every course's numerator and denominator
+        ind = 0
         for i in range(len(self.gradeTable)):
             rows = self.gradeTable[i].findAll('tr')
-
-            ind = 0
 
             for tr in rows[i + 1:]:
                 cols = tr.findAll('td')
