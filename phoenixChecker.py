@@ -14,13 +14,9 @@ class phoenixChecker(object):
         self.password = password
         self.email = email
 
-        self.verbose = True
         self.numDenom = [[0 for j in range(2)] for i in range(7)]
         
         self.update()
-
-    def setVerbose(self, verb): #sets specificity (assignments or percentages)
-        self.verbose = verb
 
     def setUsername(self, user):#sets username
         self.username = user
@@ -33,24 +29,17 @@ class phoenixChecker(object):
 
     def check(self):#checks for changes
         #create copy and update
-        temp = self.gradeTable
         tempNum = self.numDenom
         self.update()
         
         #print old and new versions
         now = datetime.datetime.now()
-        print()
-        print(str(now))
-        print('*'*8 + 'previous version' + '*'*8)
-        self.printGrades(temp, tempNum)
-        print('*'*32)
-
-        print('*'*10 + 'new version' + '*'*11)
+        print('*'*16 + 'new version' + '*'*16)
         self.printGrades(self.gradeTable, self.numDenom)
-        print('*'*32)
+        print('*'*43)
         
         #if different, emails differences
-        if temp != self.gradeTable and (not verbose or tempNum != self.numDenom):
+        if tempNum != self.numDenom:
             count = 0
             changes[0] = 'error: misfire'
             for i in range(len(temp)):#iterates through each row
@@ -62,12 +51,9 @@ class phoenixChecker(object):
                     
                     mp2O = colsO[5]
                     mp2N = colsN[5]
-                    #if different, add changes to list of strings (verbose checks numerators/denominators)
-                    if mp2O != mp2N or (self.verbose and tempNum[i] != self.numDenom[i]):
-                        if self.verbose:
-                            changes[count] = colsO[1].text + ' (' + str(tempNum[i][0]) + '/' + str(tempNum[i][1]) + ') : ' + mp2O.text + ' -> ' + mp2N.text + ' (' + str(self.numDenom[i][0]) + '/' + str(self.numDenum[i][1]) + ')'
-                        else:
-                            changes[count] = colsO[1].text  + ': ' + mp2O.text + ' -> ' + mp2N.text
+                    #add changes to list of strings
+                    if tempNum[i] != self.numDenom[i]:
+                        changes[count] = colsO[1].text + ' (' + str(tempNum[i][0]) + '/' + str(tempNum[i][1]) + ') : ' + mp2O.text + ' -> ' + mp2N.text + ' (' + str(self.numDenom[i][0]) + '/' + str(self.numDenum[i][1]) + ')'
                         count += 1
             
             #print and email changes
@@ -112,9 +98,7 @@ class phoenixChecker(object):
         req =  BeautifulSoup(gradeBook.text, 'lxml')
         self.gradeTable = req.findAll('table', {'class':'info_tbl'})
         
-        #update assignments if verbose
-        if self.verbose:
-            self.updateNumDenom()
+        self.updateNumDenom()
 
     def printGrades(self, table, nums):#prints summary of grades
         for i in range(len(table)):
@@ -128,11 +112,8 @@ class phoenixChecker(object):
                 
                 parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
                 parseGrade = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',mp2)
-                if self.verbose:
-                    print (parenMinus.group() +':' + '\t'*(3 - int( len(parenMinus.group())/8)) + mp2 +' (' +str(nums[count][0]) + '/' + str(nums[count][1]) + ')')
-                    count += 1
-                else:
-                    print (parenMinus.group() +':' + '\t'*(3 - int( len(parenMinus.group())/8)) + mp2)
+                print (parenMinus.group() +':' + '\t'*(3 - int( len(parenMinus.group())/8)) + mp2 +' (' +str(nums[count][0]) + '/' + str(nums[count][1]) + ')')
+                count += 1
 
     def sendMail(self, message):#sends emai
         server = smtplib.SMTP('smtp.gmail.com')
@@ -176,4 +157,4 @@ class phoenixChecker(object):
                     self.numDenom[ind][1] += float(score[10:])
                 else:
                     self.numDenom[ind][0] += float(score[0:3])
-                    self.numDenom[ind][1] += float(score[11:])
+                    self.numDenom[ind][1] += f(score[11:])
