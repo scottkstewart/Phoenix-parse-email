@@ -19,6 +19,7 @@ elif checkType == 'd' or checkType == 'D':
 else:
     timeInt = 60 * int(input("How many minutes? "))
 
+bot.printGrades()
 while True:
-    bot.check()
     time.sleep(timeInt)
+    bot.check()

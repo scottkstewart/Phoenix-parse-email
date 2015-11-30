@@ -33,8 +33,8 @@ class phoenixChecker(object):
         tempNum = self.numDenom
         self.update()
         
-        #print old and new versions
-        self.printGrades(self.gradeTable, self.numDenom)
+        #print
+        self.printGrades()
         
         #if different, emails differences
         if tempNum != self.numDenom:
@@ -115,13 +115,16 @@ class phoenixChecker(object):
         
         self.updateNumDenom()
 
-    def printGrades(self, table, nums):#prints summary of grades
+    def printGrades(self):#prints summary of grades
         now = datetime.datetime.now()
-        print('*'*16 + 'new version' + '*'*16)
+        
+        print()
+        print(str(now))
+        print('*'*44)
         
         for i in range(len(self.grades)):
             print(self.grades[i][0] + ': ' + '\t'*(3 - int((len(self.grades[i][0])+2)/8))+ str(self.grades[i][1]) + ' (' + str(self.numDenom[i][0]) + '/' + str(self.numDenom[i][1]) + ')')
-        print('*'*43)
+        print('*'*44)
 
     def sendMail(self, message):#sends emai
         server = smtplib.SMTP('smtp.gmail.com')
