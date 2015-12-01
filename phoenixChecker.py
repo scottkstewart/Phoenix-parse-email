@@ -4,6 +4,7 @@ import re
 import json
 import requests
 import time
+import copy
 from time import sleep
 from bs4 import BeautifulSoup
 class phoenixChecker(object):
@@ -30,7 +31,7 @@ class phoenixChecker(object):
 
     def check(self):#checks for changes
         #create copy and update
-        tempNum = self.numDenom
+        tempNum = copy.copy(self.numDenom)
         self.update()
         
         #print
