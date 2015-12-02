@@ -6,9 +6,8 @@ stuff = shelve.open('stuff')
 
 bots = []
 count = 0
-for str in accounts.keys():
+for str in list(accounts.keys()):
     bots.append(accounts[str])
-    
     count += 1
 
 while True:
