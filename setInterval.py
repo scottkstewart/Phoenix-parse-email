@@ -11,7 +11,7 @@ elif checkType == 'd' or checkType == 'D':
 else:
     timeInt = 60 * int(input("How many minutes? "))
 
-stuff = shelve.open('stuff.dat)', writeback=True)
+stuff = shelve.open('stuff', writeback=True)
 
 stuff['interval'] = timeInt
 

@@ -1,7 +1,7 @@
 from phoenixChecker import *
 import time
 import shelve
-accounts = shelve.open('accounts.dat', writeback=True)
+accounts = shelve.open('accounts', writeback=True)
 stuff = shelve.open('stuff')
 
 bots = []
