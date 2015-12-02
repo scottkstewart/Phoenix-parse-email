@@ -121,7 +121,7 @@ class phoenixChecker(object):
         
         print()
         print(str(now))
-        print('*'*44)
+        print('*'*19 + self.username + '*'*19)
         
         for i in range(len(self.grades)):
             print(self.grades[i][0] + ': ' + '\t'*(3 - int((len(self.grades[i][0])+2)/8))+ str(self.grades[i][1]) + ' (' + str(self.numDenom[i][0]) + '/' + str(self.numDenom[i][1]) + ')')

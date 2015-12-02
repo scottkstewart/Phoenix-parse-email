@@ -1,25 +1,21 @@
 from phoenixChecker import *
 import time
-import getpass
+import shelve
+accounts = shelve.open('accounts.dat', writeback=True)
+stuff = shelve.open('stuff')
 
-username = input("Username: ")
-password = getpass.getpass("Password: ")
-email = input("Email: ")
+bots = []
+count = 0
+for str in accounts.keys():
+    bots.append(accounts[str])
+    bots[count].update()
+    bots[count].printGrades()
+    
+    count += 1
 
-bot = phoenixChecker(username, password, email)
-
-checkType = input("Update interval type ((s)econd, (m)inute, (h)our, (d)ay), default minute: ")
-
-if checkType == 's' or checkType == 'S':
-    timeInt = int(input("How many seconds? "))
-elif checkType == 'h' or checkType == 'H':
-    timeInt = 60*60*int(input("How many hours? "))
-elif checkType == 'd' or checkType == 'D':
-    timeInt = 60*60*24*int(input("how many days? "))
-else:
-    timeInt = 60 * int(input("How many minutes? "))
-
-bot.printGrades()
 while True:
-    time.sleep(timeInt)
-    bot.check()
+    time.sleep(stuff['interval'])
+    for b in bots:
+        b.check()
+
+    d.sync()
