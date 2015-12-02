@@ -1,8 +1,10 @@
 from phoenixChecker import *
 import time
 import shelve
+import sys
 accounts = shelve.open('accounts', writeback=True)
 stuff = shelve.open('stuff')
+sys.setrecursionlimit(10000)
 
 bots = []
 count = 0
@@ -14,6 +16,6 @@ while True:
     for b in bots:
         b.check()
     
-    time.sleep(stuff['interval'])
+    accounts.sync()
 
-    d.sync()
+    time.sleep(stuff['interval'])

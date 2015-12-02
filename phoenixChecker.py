@@ -31,36 +31,42 @@ class phoenixChecker(object):
 
     def check(self):#checks for changes
         #create copy and update
-        tempNum = copy.copy(self.numDenom)
+        tempNum = [[0 for i in range(2)] for j in range(7)]
+
+        for i in range(len(tempNum)):
+            for j in range(len(self.numDenom[i])):
+                tempNum[i][j] = self.numDenom[i][j]
+
         self.update()
-        
         #print
         self.printGrades()
         
         #if different, emails differences
         if tempNum != self.numDenom:
-            count = 0
-            changes[0] = 'error: misfire'
-            for i in range(len(temp)):#iterates through each row
-                rowsO = temp[i].findAll('tr')
+            changes = []
+            for i in range(len(self.gradeTable)):#iterates through each row
+                rowsO = self.gradeTable[i].findAll('tr')
                 rowsN = self.gradeTable[i].findAll('tr')
-                for j in range(len(rows[i + 1:])):#find each percentage
-                    colsO = rowsO[j].findAll('td')
-                    colsN = rowsN[j].findAll('td')
+                for j in range(len(rowsO[i + 1:])):#find each percentage
+                    colsO = rowsO[j+1].findAll('td')
+                    colsN = rowsN[j+1].findAll('td')
                     
                     mp2O = colsO[5]
                     mp2N = colsN[5]
+                   
+                    parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',colsO[1].text)
+
                     #add changes to list of strings
-                    if tempNum[i] != self.numDenom[i]:
-                        changes[count] = colsO[1].text + ' (' + str(tempNum[i][0]) + '/' + str(tempNum[i][1]) + ') : ' + mp2O.text + ' -> ' + mp2N.text + ' (' + str(self.numDenom[i][0]) + '/' + str(self.numDenum[i][1]) + ')'
-                        count += 1
+                    if tempNum[j] != self.numDenom[j]:
+                        changes.append(parenMinus.group() + ' ' + mp2O.text +  ' (' + str(tempNum[j][0]) + '/' + str(tempNum[j][1]) + ') -> ' + mp2N.text + ' (' + str(self.numDenom[j][0]) + '/' + str(self.numDenom[j][1]) + ')')
             
             #print and email changes
-            print(changes)
-            self.sendMail(changes)
+            for change in changes:
+                print(change)
+                self.sendMail(change)
         else:
             print('No Changes')
-
+    
     def update(self):
         #get page
         req = self.session.get('https://portal.lcps.org/Login_Student_PXP.aspx')
@@ -131,7 +137,7 @@ class phoenixChecker(object):
         server = smtplib.SMTP('smtp.gmail.com')
         server.starttls()
         server.login('phoenixpythonbot@gmail.com', 'pythonpass')
-        server.sendmail('phoenixpythonbot@gmail.com', self.email, message)
+        server.sendmail('phoenixpythonbot@gmail.com', self.email, '\n'+message)
         server.quit()
 
     def updateNumDenom(self):#updates every course's numerator and denominator
@@ -168,4 +174,6 @@ class phoenixChecker(object):
                     self.numDenom[ind][1] += float(score[10:])
                 else:
                     self.numDenom[ind][0] += float(score[0:3])
-                    self.numDenom[ind][1] += f(score[11:])
+                    self.numDenom[ind][1] += float(score[11:])
+
+
