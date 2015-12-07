@@ -1,0 +1,13 @@
+#!/bin/bash
+
+while [ "$1" != "" ]; do
+    case $1 in
+        add )           	exec python ~/Phoenix-parse-email/add.py
+                                ;;
+        set )    		exec python ~/Phoenix-parse-email/setInterval.py
+                                ;;
+        run )           	exec python ~/Phoenix-parse-email/run.py
+                                exit 1
+    esac
+    shift
+done

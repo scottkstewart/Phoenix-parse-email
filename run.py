@@ -2,8 +2,9 @@ from phoenixChecker import *
 import time
 import shelve
 import sys
-accounts = shelve.open('accounts', writeback=True)
-stuff = shelve.open('stuff')
+import os
+accounts = shelve.open(os.path.realpath(__file__)[:-6] + 'accounts', writeback=True)
+stuff = shelve.open(os.path.realpath(__file__)[:-6] + 'stuff')
 sys.setrecursionlimit(10000)
 
 bots = []

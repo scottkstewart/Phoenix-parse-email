@@ -1,4 +1,5 @@
 import shelve
+import os
 
 checkType = input("Update interval type ((s)econd, (m)inute, (h)our, (d)ay), default minute: ")
     
@@ -11,7 +12,7 @@ elif checkType == 'd' or checkType == 'D':
 else:
     timeInt = 60 * int(input("How many minutes? "))
 
-stuff = shelve.open('stuff', writeback=True)
+stuff = shelve.open(os.path.realpath(__file__)[:-14] + 'stuff', writeback=True)
 
 stuff['interval'] = timeInt
 
