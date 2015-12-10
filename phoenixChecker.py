@@ -134,7 +134,7 @@ class phoenixChecker(object):
         print('*'*44)
 
     def sendMail(self, message):#sends emai
-        server = smtplib.SMTP('smtp.gmail.com')
+        server = smtplib.SMTP('smtp.gmail.com',587)
         server.starttls()
         server.login('phoenixpythonbot@gmail.com', 'pythonpass')
         server.sendmail('phoenixpythonbot@gmail.com', self.email, '\n'+message)
