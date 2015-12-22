@@ -9,6 +9,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from copy import deepcopy
 
 class phoenixChecker(object):
     def __init__(self, user, password, email): #3-arg constructor
@@ -20,9 +21,10 @@ class phoenixChecker(object):
 
         self.numDenom = [[0 for j in range(2)] for i in range(7)]
         self.grades = [['' for j in range(2)] for i in range(7)]
+        self.assignments = [['' for j in range(2)] for i in range(7)]
 
         self.update()
-
+        
     def setUsername(self, user):#sets username
         self.username = user
 
@@ -34,15 +36,9 @@ class phoenixChecker(object):
 
     def check(self):#checks for changes
         #create copy and update
-        tempNum = [[0 for i in range(2)] for j in range(7)]
-        tempTable = []
-        
-        for i in range(len(tempNum)):
-            for j in range(len(self.numDenom[i])):
-                tempNum[i][j] = self.numDenom[i][j]
-        
-        for rows in self.gradeTable:
-            tempTable.append(rows)
+        tempNum = copy.deepcopy(self.numDenom)
+        tempAs = copy.deepcopy(self.assignments)
+        tempTable = copy.deepcopy(self.gradeTable)
 
         self.update()
         #print
@@ -65,7 +61,19 @@ class phoenixChecker(object):
 
                     #add changes to list of strings
                     if tempNum[j] != self.numDenom[j]:
-                        changes.append([parenMinus.group(), mp2O.text +  ' (' + str(tempNum[j][0]) + '/' + str(tempNum[j][1]) + ') -> ' + mp2N.text + ' (' + str(self.numDenom[j][0]) + '/' + str(self.numDenom[j][1]) + ')'])
+                        newAs = []
+
+                        for assignment in self.assignments[j]:
+                            new = False
+
+                            for possible in tempAs:
+                                if assignment[0] != tempAs[0] or assignment[1] != tempAs[1]:
+                                    new = True
+
+                            if new:
+                               newAs.append(assignment) 
+                        
+                        changes.append([parenMinus.group(), mp2O.text +  ' (' + str(tempNum[j][0]) + '/' + str(tempNum[j][1]) + ') -> ' + mp2N.text + ' (' + str(self.numDenom[j][0]) + '/' + str(self.numDenom[j][1]) + ')', newAs])
                         
             #print and email changes
             subject = 'Change to'
@@ -74,7 +82,10 @@ class phoenixChecker(object):
             for change in changes:
                 print(change[0] + ' ' + change[1])
                 subject += ' ' + change[0]
-                message += '\n' + change[0] + ' ' + change[1]
+                message += '\n\n' + change[0] + ':\n' + change[1]
+                
+                for assignment in change[2]:
+                    message += '\n' + assignment[0] + ': (' + assignment[1] + ')'
 
             self.sendMail(message, subject)
         else:
@@ -178,20 +189,29 @@ class phoenixChecker(object):
             rows = tempTable[1].findAll('tr')
         else:
             rows = tempTable[0].findAll('tr')
-        
+
         self.numDenom[ind][0] = self.numDenom[ind][1] = 0
-        
+        self.assignments[ind][0] = []
+        self.assignments[ind][1] = []
+
         for tr in rows[2:-1]:
             cols = tr.findAll('td')
             
+            num = denom = 0
+
             score = cols[4].text
             if score[0].isnumeric():
                 if score[1] == ' ':
-                    self.numDenom[ind][0] += float(score[0])
-                    self.numDenom[ind][1] += float(score[9:])
+                    num = float(score[0])
+                    denom = float(score[9:])
                 elif score[2] == ' ':
-                    self.numDenom[ind][0] += float(score[0:2])
-                    self.numDenom[ind][1] += float(score[10:])
+                    num = float(score[0:2])
+                    denom = float(score[10:])
                 else:
-                    self.numDenom[ind][0] += float(score[0:3])
-                    self.numDenom[ind][1] += float(score[11:])
+                    num = float(score[0:3])
+                    denom = float(score[11:])
+
+            self.numDenom[ind][0] += num
+            self.numDenom[ind][1] += denom
+            self.assignments[ind][0].append(cols[1].text)
+            self.assignments[ind][1].append(str(num) + '/' + str(denom))
