@@ -36,7 +36,7 @@ class phoenixChecker(object):
         #create copy and update
         tempNum = [[0 for i in range(2)] for j in range(7)]
         tempTable = []
-
+        
         for i in range(len(tempNum)):
             for j in range(len(self.numDenom[i])):
                 tempNum[i][j] = self.numDenom[i][j]
@@ -65,13 +65,18 @@ class phoenixChecker(object):
 
                     #add changes to list of strings
                     if tempNum[j] != self.numDenom[j]:
-                        changes.append(parenMinus.group() + ' ' + mp2O.text +  ' (' + str(tempNum[j][0]) + '/' + str(tempNum[j][1]) + ') -> ' + mp2N.text + ' (' + str(self.numDenom[j][0]) + '/' + str(self.numDenom[j][1]) + ')')
+                        changes.append([parenMinus.group(), mp2O.text +  ' (' + str(tempNum[j][0]) + '/' + str(tempNum[j][1]) + ') -> ' + mp2N.text + ' (' + str(self.numDenom[j][0]) + '/' + str(self.numDenom[j][1]) + ')'])
                         
             #print and email changes
-            time = str(datetime.datetime.now())
+            subject = 'Change to'
+            message = 'All changes:\n'
+            
             for change in changes:
-                print(change)
-                self.sendMail(change, 'GRADE UPDATE')
+                print(change[0] + ' ' + change[1])
+                subject += ' ' + change[0]
+                message += '\n' + change[0] + ' ' + change[1]
+
+            self.sendMail(message, subject)
         else:
             print('No Changes')
     
