@@ -2,9 +2,16 @@
 
 while [ "$1" != "" ]; do
     case $1 in
+        -h )                echo "USAGE: phoenix [-h] {add, set, run}
+-h: print usage and exit
+add: add/change user
+set: set interval between checks
+run: run checks"
+                            exit 1
+                            ;;
         add )           	exec python3 ~/Phoenix-parse-email/add.py
                                 ;;
-        set )    		exec python3 ~/Phoenix-parse-email/setInterval.py
+        set )    		    exec python3 ~/Phoenix-parse-email/setInterval.py
                                 ;;
         run )           	exec python3 ~/Phoenix-parse-email/run.py
 				exit 1
