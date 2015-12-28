@@ -1,11 +1,8 @@
 import datetime
 import smtplib
 import re
-import json
 import requests
-import time
 import copy
-from time import sleep
 from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -37,13 +34,13 @@ class phoenixChecker(object):
     def check(self):#checks for changes
         #create copy and update
         tempNum = copy.deepcopy(self.numDenom)
-        tempAs = copy.deepcopy(self.assignments)
         tempTable = copy.deepcopy(self.gradeTable)
+        tempAs = copy.deepcopy(self.assignments)
 
         self.update()
         #print
         self.printGrades()
-        
+
         #if different, emails differences
         if tempNum != self.numDenom:
             changes = []
@@ -64,15 +61,15 @@ class phoenixChecker(object):
                         newAs = []
 
                         for assignment in self.assignments[j]:
-                            new = False
+                            new = True
 
-                            for possible in tempAs:
-                                if assignment[0] != tempAs[0] or assignment[1] != tempAs[1]:
-                                    new = True
+                            for temp in tempAs[j]:
+                                if assignment[0] == temp[0] and assignment[1] == temp[1]:
+                                    new = False    
 
                             if new:
-                               newAs.append(assignment) 
-                        
+                                newAs.append([assignment[0], assignment[1]])
+
                         changes.append([parenMinus.group(), mp2O.text +  ' (' + str(tempNum[j][0]) + '/' + str(tempNum[j][1]) + ') -> ' + mp2N.text + ' (' + str(self.numDenom[j][0]) + '/' + str(self.numDenom[j][1]) + ')', newAs])
                         
             #print and email changes
@@ -83,9 +80,9 @@ class phoenixChecker(object):
                 print(change[0] + ' ' + change[1])
                 subject += ' ' + change[0]
                 message += '\n\n' + change[0] + ':\n' + change[1]
-                
+
                 for assignment in change[2]:
-                    message += '\n' + assignment[0] + ': (' + assignment[1] + ')'
+                    message += '\n' + assignment[0] + ': ' + assignment[1]
 
             self.sendMail(message, subject)
         else:
@@ -172,6 +169,8 @@ class phoenixChecker(object):
         server.quit()
 
     def updateNumDenom(self):#updates every course's numerator and denominator
+        self.assignments = ['' for i in range(7)]
+        
         ind = 0
         for i in range(len(self.gradeTable)):
             rows = self.gradeTable[i].findAll('tr')
@@ -191,8 +190,7 @@ class phoenixChecker(object):
             rows = tempTable[0].findAll('tr')
 
         self.numDenom[ind][0] = self.numDenom[ind][1] = 0
-        self.assignments[ind][0] = []
-        self.assignments[ind][1] = []
+        self.assignments[ind] = []
 
         for tr in rows[2:-1]:
             cols = tr.findAll('td')
@@ -213,5 +211,5 @@ class phoenixChecker(object):
 
             self.numDenom[ind][0] += num
             self.numDenom[ind][1] += denom
-            self.assignments[ind][0].append(cols[1].text)
-            self.assignments[ind][1].append(str(num) + '/' + str(denom))
+            
+            self.assignments[ind].append([cols[1].text, '(' + str(num) + '/' + str(denom) + ')'])
