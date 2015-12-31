@@ -36,11 +36,11 @@ class phoenixChecker(object):
 
         #create deep copy of classes
         for cl in self.classes:
-            tempClasses.append(phoenixClass(self.session, cl.getName(), cl.getURL(), cl.getNumerator(), cl.getDenominator(), cl.getGrade(), cl.getAssignments()))
+            tempClasses.append(phoenixClass(self.session, cl.getName(), cl.getURL(), cl.getNumerator(), cl.getDenominator(), cl.getGrade(), copy.deepcopy(cl.getAssignments())))
         
         #update
         self.update()
-
+        
         #print grades
         self.printGrades()
         
@@ -66,7 +66,7 @@ class phoenixChecker(object):
                         newAs.append([assignment[0], assignment[1]])
                 
                 #add change to log
-                changes.append([classO.getName(), classO.getGrade() +  ' (' + str(classO.getNumerator()) + '/' + str(classO.getDenominator()) + ') -> ' + classN.getName() + ' (' + str(classN.getNumerator()) + '/' + str(classN.getDenominator()) + ')', newAs])
+                changes.append([classO.getName(), classO.getGrade() +  ' (' + str(classO.getNumerator()) + '/' + str(classO.getDenominator()) + ') -> ' + classN.getGrade() + ' (' + str(classN.getNumerator()) + '/' + str(classN.getDenominator()) + ')', newAs])
         
         if changes == []: #if blank, do nothing
             print('No Changes')
