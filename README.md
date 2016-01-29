@@ -15,6 +15,6 @@ phoenix [-h] {add, set, run}
 
 add: add/change user
 
-set: set interval between checks
+set: set interval between checks and connection retries
 
 run: run checks
