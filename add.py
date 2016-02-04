@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from phoenixChecker import *
 import getpass
 import shelve

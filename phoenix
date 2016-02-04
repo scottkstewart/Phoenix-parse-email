@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -9,11 +9,11 @@ set: set interval between checks
 run: run checks"
                             exit 1
                             ;;
-        add )           	exec python3 ~/Phoenix-parse-email/add.py
+        add )           	exec ~/Phoenix-parse-email/add.py
                                 ;;
-        set )    		    exec python3 ~/Phoenix-parse-email/setInterval.py
+        set )    		    exec ~/Phoenix-parse-email/setInterval.py
                                 ;;
-        run )           	exec python3 ~/Phoenix-parse-email/run.py
+        run )           	exec ~/Phoenix-parse-email/run.py
 				exit 1
     esac
     shift
