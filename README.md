@@ -1,9 +1,15 @@
 # Phoenix-parse-email
-Parses phoenix gradebook client and emails changes.
+Parses phoenix gradebook client and emails changes. Files contained in ~/.PPE/
+
 
 Installation:
 
-For linux: resolve all dependencies (you're on your own), change paths in the file 'phoenix' to match the places where your python files are installed, move the file 'phoenix' to your $PATH, and set the interval/add acounts before running the script.
+For unix: run install script. Uninstall with uninstall.
+```
+git clone https://github.com/scottkstewart/Phoenix-parse-email.git
+cd Phoenix-parse-email
+./install
+```
 
 For anybody else: you're on your own for this (the python files themselves are useable through python {add, setInterval, run}.py or the same with python3). This is a simple enough script that using it on any OS should be simple.
 

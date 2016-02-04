@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+echo "Installing python modules..."
+pip install -q beautifulsoup4 requests lxml
+ 
+echo "Creating ~/.PPE/"
+mkdir ~/.PPE
+ 
+echo "Moving files to ~/.PPE/"
+mv run.py ~/.PPE/run.py
+mv setInterval.py ~/.PPE/setInterval.py
+mv add.py ~/.PPE/add.py
+mv phoenixChecker.py ~/.PPE/phoenixChecker.py
+mv phoenixClass.py ~/.PPE/phoenixClass.py
+ 
+echo "Installing Phoenix-Parse-Email"
+sudo mv phoenix /usr/bin/phoenix

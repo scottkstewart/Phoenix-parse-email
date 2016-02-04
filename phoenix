@@ -9,11 +9,11 @@ set: set interval between checks
 run: run checks"
                             exit 1
                             ;;
-        add )           	exec ~/Phoenix-parse-email/add.py
+        add )           	exec ~/.PPE/add.py
                                 ;;
-        set )    		    exec ~/Phoenix-parse-email/setInterval.py
+        set )    		exec ~/.PPE/setInterval.py
                                 ;;
-        run )           	exec ~/Phoenix-parse-email/run.py
+        run )           	exec ~/.PPE/run.py
 				exit 1
     esac
     shift

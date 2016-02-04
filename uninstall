@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+ 
+echo "Removing ~/.PPE/"
+rm -rf ~/.PPE/
+ 
+echo "Uninstalling Phoenix-Parse-Email"
+sudo rm /usr/bin/phoenix
