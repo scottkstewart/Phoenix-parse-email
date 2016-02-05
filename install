@@ -1,7 +1,35 @@
 #!/usr/bin/env sh
 
+echo 'Checking Python version...\'
+
+# Get python version
+version="$(python3 --version 2>&1)"
+
+# Extract the first word
+python=$(echo $version | cut -d ' ' -f 1)
+
+# If the first word isn't python, assume Python3 isn't installed and exit
+if [ $python != "Python" ];
+then
+    echo 'Python 3 not installed. Install Python3 and run again.'
+    exit 1
+fi
+
+# First get the numerical version (e.g. 3.4.4) then create a number for it (e.g. 34)
+numversion=$(echo $version | cut -d ' ' -f 2)
+num="$(echo $numversion | cut -d '.' -f 1)$(echo $numversion | cut -d '.' -f 2)"
+ 
+# If the number < 34 (version is older than 3.4) exit
+if [ $num -lt 34 ];
+then 
+    echo 'Wrong python 3 version; update to at least 3.4.'
+    exit 1
+else
+    echo 'Python version is current'
+fi  
+
 echo "Installing python modules..."
-pip install -q beautifulsoup4 requests lxml
+python3 -m pip install -q beautifulsoup4 requests lxml
  
 echo "Creating ~/.PPE/"
 mkdir ~/.PPE

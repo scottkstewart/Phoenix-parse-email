@@ -1,5 +1,5 @@
 # Phoenix-parse-email
-Parses phoenix gradebook client and emails changes. Files contained in ~/.PPE/
+Parses phoenix gradebook client and emails changes. Runs on at least Python 3.4. Files contained in ~/.PPE/.
 
 
 Installation:
