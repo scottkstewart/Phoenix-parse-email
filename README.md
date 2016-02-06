@@ -2,9 +2,9 @@
 Parses phoenix gradebook client and emails changes. Runs on at least Python 3.4. Files contained in ~/.PPE/.
 
 
-Installation:
+**Installation:**
 
-For unix: run install script. Uninstall with uninstall.
+For unix: run install script. Uninstall with uninstall (-n or --no-purge retains the accounts and settings data for small upgrades).
 ```
 git clone https://github.com/scottkstewart/Phoenix-parse-email.git
 cd Phoenix-parse-email
@@ -14,7 +14,23 @@ cd Phoenix-parse-email
 For anybody else: I can't guarentee compatibility, but the python files are simple enough that you can change the path in the 'phoenix' file to whatever directory you want and run it simply with python3 phoenix [options]. 
 
 
-Usage:
+**Upgrades:**
+
+If on unix, one can upgrade by uninstalling (without purging on small upgrades), syncing with the repository, and installing again. Using the --no-purge flag will allow you to retain data, but will not work for large upgrades that affect set options/phoenixClass.py/phoenixChecker.py. Run the following for a small upgrade (from Phoenix-parse-email folder):
+```
+./uninstall --no-purge
+git fetch
+./install
+```
+Or for a larger upgrade (will require accounts to be remade and settings to be set again)
+```
+./uninstall
+git fetch
+./install
+```
+
+
+**Usage:**
 
 phoenix [-h] {add [-n, --no-continue], set [-i, -t], run [key1, key2, ...]}
 
@@ -27,7 +43,7 @@ set: set interval between checks (-i) and connection retries (-t) or both (blank
 run: run checks, optional user key(s) for selective run
 
 
-Examples:
+**Examples:**
 
 To set both intervals, add a user, and run all users
 ```

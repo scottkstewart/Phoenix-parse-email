@@ -1,7 +1,16 @@
 #!/usr/bin/env sh
- 
-echo "Removing ~/.PPE/"
-rm -rf ~/.PPE/
- 
+
+if [ $# -eq 0 ]; then
+    echo "Removing ~/.PPE/"
+    rm -rf ~/.PPE/
+elif [ "$1" = "-n" -o "$1" = "--no-purge" ]; then
+    echo "Removing Phoenix modules, retaining accounts/settings" 
+    rm ~/.PPE/phoenixClass.py
+    rm ~/.PPE/phoenixChecker.py
+else
+    echo "Error; option other than -n or --no-purge specified"
+    exit 1
+fi
+
 echo "Uninstalling Phoenix-Parse-Email"
 sudo rm /usr/bin/phoenix

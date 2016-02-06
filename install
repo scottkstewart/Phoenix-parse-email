@@ -1,16 +1,15 @@
 #!/usr/bin/env sh
 
-echo 'Checking Python version...\'
+echo 'Checking Python version...'
 
 # Get python version
 version="$(python3 --version 2>&1)"
 
 # Extract the first word
-python=$(echo $version | cut -d ' ' -f 1)
+python="$(echo $version | cut -d ' ' -f 1)"
 
 # If the first word isn't python, assume Python3 isn't installed and exit
-if [ $python != "Python" ];
-then
+if [ $python != "Python" ]; then
     echo 'Python 3 not installed. Install Python3 and run again.'
     exit 1
 fi
@@ -20,24 +19,47 @@ numversion=$(echo $version | cut -d ' ' -f 2)
 num="$(echo $numversion | cut -d '.' -f 1)$(echo $numversion | cut -d '.' -f 2)"
  
 # If the number < 34 (version is older than 3.4) exit
-if [ $num -lt 34 ];
-then 
+if [ $num -lt 34 ]; then 
     echo 'Wrong python 3 version; update to at least 3.4.'
     exit 1
 else
     echo 'Python version is current'
 fi  
 
-echo "Installing python modules..."
-sudo python3 -m pip install -q beautifulsoup4 requests lxml
- 
-echo "Creating ~/.PPE/"
-mkdir ~/.PPE
+# Get pip module version
+pypip="$(python3 -m pip --version 2>&1)"
+
+# Extract the potential "not found" message
+err="$(echo $pypip | cut -d ' ' -f 5-)"
+
+# If pip inst't installed, check for python module
+if [ "$err" = "not found" ];then
+    # Get/extract pip version (in case pip module is installed but pip isn't)
+    pip="$(pip3 --version)"
+    piperr="$(echo $pip | cut -d ' ' -f 5-)"
+    
+    # If neither version is found, exit
+    if [ "$pyerr" == "not found" ]; then
+        echo "Pip not found; install pip and run again."
+        exit 1
+    else
+        # Otherwise install modules through pip
+        echo "Installing python modules through pip..."
+        sudo pip3 install -q beautifulsoup4 requests lxml
+    fi
+else
+    # Install through pip if available
+    echo "Installing python modules through pip module..."
+    sudo python3 -m pip install -q beautifulsoup4 requests lxml
+fi
+
+# If direcory doesn't already exist create directory
+if [ ! -d ~/.PPE/ ]; then
+    echo "Creating ~/.PPE/"
+    mkdir ~/.PPE
+fi
  
 echo "Copying files to ~/.PPE/"
-cp run.py ~/.PPE/run.py
-cp setInterval.py ~/.PPE/setInterval.py
-cp add.py ~/.PPE/add.py
 cp phoenixChecker.py ~/.PPE/phoenixChecker.py
 cp phoenixClass.py ~/.PPE/phoenixClass.py
  
