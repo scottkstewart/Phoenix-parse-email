@@ -1,20 +1,163 @@
-#!/usr/bin/env sh
+#!/usr/bin/env python3
+import imp
+import getpass
+import sys
+import shelve
+import os
+import time
+import urllib.request
+import select
 
-while [ "$1" != "" ]; do
-    case $1 in
-        -h )                echo "USAGE: phoenix [-h] {add, set, run}
+def getPhoenixClass():# import phoenix class
+    # get module containing class
+    phoenixModule = imp.load_source('phoenixChecker', os.getenv("HOME") + '/.PPE/phoenixChecker.py')
+    #return the class
+    return phoenixModule.phoenixChecker
+
+def add(nocontinue):# add user to list of bots
+    # open accounts database, set high recursion limit
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    sys.setrecursionlimit(10000)
+    
+    # import phoenixChecker class
+    phoenixChecker = getPhoenixClass()
+    
+
+    cont = 'y'
+    while cont == 'y' or cont == 'Y':# continue to ask additions until user doesn't say 'y'
+        # accept user input
+        username = input("Username: ")
+        password = getpass.getpass("Password: ")
+        email = input("Email: ")
+                     
+        # instantiate bot
+        bot = phoenixChecker(username, password, email)
+         
+        # shelve bot for long term storage
+        accounts[username] = bot
+        
+        if nocontinue:# if nocontinue is specified, stop after one iteration
+            cont = 'n'
+        else:# ask for user input to continue or stop
+            cont = input("Add another? (y/n): ")
+
+    accounts.close()
+
+
+def formatInput(checkType):# format input for set
+    #interpret timeframe and accept interval time
+    if checkType == 's' or checkType == 'S':
+        return int(input("How many seconds? "))
+    elif checkType == 'h' or checkType == 'H':
+        return 60*60*int(input("How many hours? "))
+    elif checkType == 'd' or checkType == 'D':
+        return 60*60*24*int(input("how many days? "))
+    else:
+        return 60 * int(input("How many minutes? "))
+
+def set(interval):# set intervals between events
+    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    
+    if interval == "-i" or interval == "":# if -i is specified or no operation specified prompt for interval
+        stuff['interval'] = formatInput(input("Update interval type ((s)econd, (m)inute, (h)our, (d)ay), default minute: "))
+    if interval == "-t" or interval == "":# if -t is specified or no operation specified prompt for autotry
+        stuff['autotry'] = formatInput(input("Update autotry type ((s)econd, (m)inute, (h)our, (d)ay), default minute: "))
+    
+    stuff.close()
+
+
+def run(botlist):# start the bots
+    # open shelved data, set recursion limit
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    sys.setrecursionlimit(10000)
+    
+    # import phoenixChecker class
+    phoenixChecker = getPhoenixClass()
+
+    # instantiate list of all used phoenix checkers
+    bots = []
+    if len(botlist) == 0:# if list of bots is empty check all in accounts database
+        for key in list(accounts.keys()):
+            bots.append(accounts[key])
+    else:# otherwise iterate through all bots in list
+        for key in botlist:
+            bots.append(accounts[key])
+
+    # checks each account, syncs with shelve, and waits for specified interval
+    while True:
+        # get sleep/autotry intervals
+        sleepInterval = stuff['interval']
+        autotryInterval = stuff['autotry']
+        
+        # check until the program exits or connects
+        while True:
+            try: # will exit loop and check if the script connects to phoenix without error (times out after a minute)
+                r = urllib.request.urlopen('http://portal.lcps.org/',timeout=60)
+                break
+            except urllib.request.URLError:
+                # format interval between autotries to be human readable
+                if autotryInterval <= 60:
+                    autotryTime = str(autotryInterval) + ' seconds'
+                elif autotryInterval <= 3600:
+                    autotryTime = str(autotryInterval/60) + ' minutes'
+                else:
+                    autotryTime = str(autotryInterval/3600) + ' hours'
+                
+                # print and read input for time specified by autotry interval
+                print('Phoenix not loaded within 60 seconds. Retry? (Y/n). Will autotry in ' + autotryTime + '.')
+                i, o, e = select.select([sys.stdin], [], [], autotryInterval)   
+
+                if i:# if there is an input, continue in loop if 'y', exit otherwise
+                    if sys.stdin.readline().strip()[0] == 'y':
+                        print('Retrying...')
+                    else:
+                        print('Exiting')
+                        sys.exit(0)
+                else:# if the program continues without input, autotry (interval is over)
+                    print('Autotrying...')
+
+        # iterate through list of bots, checking each
+        for b in bots:
+            b.check()
+        
+        # sync accounts database with checked bots
+        accounts.sync()
+        
+        #sleep for specified time
+        time.sleep(sleepInterval)
+
+# set menu for help/usage instructions
+HELPMENU = """USAGE: phoenix [-h] {add [-n, --no-continue], set [-i, -t], run [key1, key2, ...]}
 -h: print usage and exit
-add: add/change user
-set: set interval between checks
-run: run checks"
-                            exit 1
-                            ;;
-        add )           	exec ~/.PPE/add.py
-                                ;;
-        set )    		exec ~/.PPE/setInterval.py
-                                ;;
-        run )           	exec ~/.PPE/run.py
-				exit 1
-    esac
-    shift
-done
+add: add/change users (-n or --no-continue specifies only one addition)
+set: set interval, either between checks (-i), between autotries (-t) or both (blank)
+run: run checks, optional user key(s) for selective run"""
+
+def arg_parse(args):# recursively parse argument list
+    if len(args) == 0:# base case, if no arguments are left do nothing
+        return
+    elif args[0] == 'run':
+        for i in range(1, len(args) + 1):# count all keys, pass all as list (including blank list)
+            if i >= len(args) or not args[i].isnumeric():
+                run(args[1:i])
+                arg_parse(args[i:])
+    elif args[0] == 'set':
+        if len(args) != 1 and (args[1] == '-t' or args[1] == '-i'):# include option
+            set(args[1])
+            arg_parse(args[2:])
+        else:# don't include option
+            set('')
+            arg_parse(args[1:])
+    elif args[0] == 'add':
+        if len(args) > 0 and (args[1] == '-n' or args[1] == '--no-continue'):# include nocontinue
+            add(True)
+            arg_parse(args[2:])
+        else:# don't include nocontinue
+            add(False)
+            arg_parse(args[1:])
+    else:# if it's not a valid command print the help menu
+        print(HELPMENU)
+
+if __name__ == "__main__": # main method; calls method to parse argument list ignoring script name
+    arg_parse(sys.argv[1:])
