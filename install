@@ -29,11 +29,11 @@ fi
 # Get pip module version
 pypip="$(python3 -m pip --version 2>&1)"
 
-# Extract the potential "not found" message
-err="$(echo $pypip | cut -d ' ' -f 2-)"
-
-# If pip inst't installed, check for python module
-if [ "$err" = "No module named pip" ];then
+# Extract the word pip if pip module is installed
+err="$(echo $pypip | cut -d ' ' -f 1)"
+echo $err
+# If pip module inst't installed, check for program
+if [ "$err" != "pip" ];then
     # Get/extract pip version (in case pip module is installed but pip isn't)
     pip="$(pip3 --version)"
     piperr="$(echo $pip | cut -d ' ' -f 5-)"
