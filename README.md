@@ -61,4 +61,9 @@ To run all users at any point
 phoenix run
 ```
 
-Written by scott stewart. Email any questions/problems to scottkstewart16@gmail.com.
+To set the interval between checks and run a user 123456
+```
+phoenix set -i run 123456
+```
+
+Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.

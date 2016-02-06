@@ -7,10 +7,14 @@ from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from copy import deepcopy
-from phoenixClass import *
 
 class phoenixChecker(object):
     def __init__(self, user, password, email): #initializes variables and updates
+        # get phoenixClass class
+        phoenixModule = imp.load_source('phoenixClass', os.getenv("HOME") + '/.PPE/phoenixClass.py'    )
+        phoenixClass = phoenixModule.phoenixClass
+
+
         self.session = requests.session()
         
         self.username = user

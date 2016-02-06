@@ -8,7 +8,7 @@ import time
 import urllib.request
 import select
 
-def getPhoenixClass():# import phoenix class
+def getPhoenixChecker():# import phoenix class
     # get module containing class
     phoenixModule = imp.load_source('phoenixChecker', os.getenv("HOME") + '/.PPE/phoenixChecker.py')
     #return the class
@@ -20,7 +20,7 @@ def add(nocontinue):# add user to list of bots
     sys.setrecursionlimit(10000)
     
     # import phoenixChecker class
-    phoenixChecker = getPhoenixClass()
+    phoenixChecker = getPhoenixChecker()
     
 
     cont = 'y'
@@ -150,7 +150,7 @@ def arg_parse(args):# recursively parse argument list
             set('')
             arg_parse(args[1:])
     elif args[0] == 'add':
-        if len(args) > 0 and (args[1] == '-n' or args[1] == '--no-continue'):# include nocontinue
+        if len(args) > 1 and (args[1] == '-n' or args[1] == '--no-continue'):# include nocontinue
             add(True)
             arg_parse(args[2:])
         else:# don't include nocontinue
