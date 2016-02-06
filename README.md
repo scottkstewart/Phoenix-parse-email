@@ -19,13 +19,13 @@ For anybody else: I can't guarentee compatibility, but the python files are simp
 If on unix, one can upgrade by uninstalling (without purging on small upgrades), syncing with the repository, and installing again. Using the --no-purge flag will allow you to retain data, but will not work for large upgrades that affect set options/phoenixClass.py/phoenixChecker.py. Run the following for a small upgrade (from Phoenix-parse-email folder):
 ```
 ./uninstall --no-purge
-git fetch
+git pull
 ./install
 ```
 Or for a larger upgrade (will require accounts to be remade and settings to be set again)
 ```
 ./uninstall
-git fetch
+git pull
 ./install
 ```
 
