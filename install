@@ -29,17 +29,17 @@ else
 fi  
 
 echo "Installing python modules..."
-python3 -m pip install -q beautifulsoup4 requests lxml
+sudo python3 -m pip install -q beautifulsoup4 requests lxml
  
 echo "Creating ~/.PPE/"
 mkdir ~/.PPE
  
-echo "Moving files to ~/.PPE/"
-mv run.py ~/.PPE/run.py
-mv setInterval.py ~/.PPE/setInterval.py
-mv add.py ~/.PPE/add.py
-mv phoenixChecker.py ~/.PPE/phoenixChecker.py
-mv phoenixClass.py ~/.PPE/phoenixClass.py
+echo "Copying files to ~/.PPE/"
+cp run.py ~/.PPE/run.py
+cp setInterval.py ~/.PPE/setInterval.py
+cp add.py ~/.PPE/add.py
+cp phoenixChecker.py ~/.PPE/phoenixChecker.py
+cp phoenixClass.py ~/.PPE/phoenixClass.py
  
 echo "Installing Phoenix-Parse-Email"
-sudo mv phoenix /usr/bin/phoenix
+sudo cp phoenix /usr/bin/phoenix
