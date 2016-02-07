@@ -73,7 +73,7 @@ def run(botlist):# start the bots
     sys.setrecursionlimit(10000)
     
     # import phoenixChecker class
-    phoenixChecker = getPhoenixClass()
+    phoenixChecker = getPhoenixChecker()
 
     # instantiate list of all used phoenix checkers
     bots = []
