@@ -3,6 +3,8 @@ import smtplib
 import re
 import requests
 import copy
+import os
+import imp
 from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart

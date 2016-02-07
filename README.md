@@ -4,7 +4,7 @@ Parses phoenix gradebook client and emails changes. Runs on at least Python 3.4.
 
 **Installation:**
 
-For unix: run install script. Uninstall with uninstall (-n or --no-purge retains the accounts and settings data for small upgrades).
+For unix: run install script (assumes either pip module or compatible pip program are installed). Uninstall with uninstall (-n or --no-purge retains the accounts and settings data for small upgrades).
 ```
 git clone https://github.com/scottkstewart/Phoenix-parse-email.git
 cd Phoenix-parse-email
@@ -16,9 +16,8 @@ For anybody else: I can't guarentee compatibility, but the python files are simp
 
 **Upgrades:**
 
-If on unix, one can upgrade by uninstalling (without purging on small upgrades), syncing with the repository, and installing again. Using the --no-purge flag will allow you to retain data, but will not work for large upgrades that affect set options/phoenixClass.py/phoenixChecker.py. Run the following for a small upgrade (from Phoenix-parse-email folder):
+If on unix, one can upgrade by uninstalling (not necessary on small upgrades), syncing with the repository, and installing again. Uninstall for upgrades that affect set options/phoenixClass.py/phoenixChecker.py. Run the following for a small upgrade (from Phoenix-parse-email folder):
 ```
-./uninstall --no-purge
 git pull
 ./install
 ```
@@ -32,16 +31,18 @@ git pull
 
 **Usage:**
 
-phoenix [-h] {add [-n, --no-continue], set [-i, -t], run [key1, key2, ...]}
-
+phoenix [-h] {command [options], command [options] ...}
 -h: print usage and exit
 
-add: add/change users (-n or --no-continue specifies only one addition)
+add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 
-set: set interval between checks (-i) and connection retries (-t) or both (blank)
+print [-q, --quiet] [key1, key2, ...]: print all keys (-q, --quiet) or grades
 
-run: run checks, optional user key(s) for selective run
+set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 
+remove [key1, key2, ...]: remove specified accounts from database
+
+run [key1, key2, ...]: run checks, optional user key(s) for selective run
 
 **Examples:**
 
@@ -61,9 +62,14 @@ To run all users at any point
 phoenix run
 ```
 
-To set the interval between checks and run a user 123456
+To set the interval between checks and print a user 123456
 ```
-phoenix set -i run 123456
+phoenix set -i print 123456
+```
+
+To change a user (123456)  and run them (remove, add again, run)
+```
+phoenix remove 123456 add --no-continue run
 ```
 
 Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.
