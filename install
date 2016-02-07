@@ -31,11 +31,11 @@ pypip="$(python3 -m pip --version 2>&1)"
 
 # Extract the word pip if pip module is installed
 err="$(echo $pypip | cut -d ' ' -f 1)"
-echo $err
+
 # If pip module inst't installed, check for program
 if [ "$err" != "pip" ];then
     # Get/extract pip version (in case pip module is installed but pip isn't)
-    pip="$(pip3 --version)"
+    pip="$(pip --version)"
     piperr="$(echo $pip | cut -d ' ' -f 5-)"
     
     # If neither version is found, exit
