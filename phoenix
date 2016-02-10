@@ -8,11 +8,17 @@ import time
 import urllib.request
 import select
 
-def getPhoenixChecker():# import phoenix class
+def getPhoenixChecker():# import phoenix checker
     # get module containing class
     phoenixModule = imp.load_source('phoenixChecker', os.getenv("HOME") + '/.PPE/phoenixChecker.py')
     #return the class
     return phoenixModule.phoenixChecker
+
+def getPhoenixClass():# import phoenix course
+    # get module containing class
+    phoenixModule = imp.load_source('phoenixClass', os.getenv("HOME") + '/.PPE/phoenixClass.py')
+    #return the class
+    return phoenixModule.phoenixClass
 
 def add(nocontinue):# add user to list of bots
     # open accounts database, set high recursion limit
@@ -21,7 +27,6 @@ def add(nocontinue):# add user to list of bots
 
     # import phoenixChecker class
     phoenixChecker = getPhoenixChecker()
-
 
     cont = 'y'
     while cont == 'y' or cont == 'Y':# continue to ask additions until user doesn't say 'y'
@@ -74,6 +79,7 @@ def run(botlist):# start the bots
 
     # import phoenixChecker class
     phoenixChecker = getPhoenixChecker()
+    phoenixClass = getPhoenixClass()
 
     # instantiate list of all used phoenix checkers
     bots = []

@@ -14,7 +14,7 @@ class phoenixChecker(object):
     def __init__(self, user, password, email): #initializes variables and updates
         # get phoenixClass class
         phoenixModule = imp.load_source('phoenixClass', os.getenv("HOME") + '/.PPE/phoenixClass.py'    )
-        phoenixClass = phoenixModule.phoenixClass
+        self.phoenixClass = phoenixModule.phoenixClass
 
 
         self.session = requests.session()
@@ -42,7 +42,7 @@ class phoenixChecker(object):
 
         #create deep copy of classes
         for cl in self.classes:
-            tempClasses.append(phoenixClass(self.session, cl.getName(), cl.getURL(), cl.getNumerator(), cl.getDenominator(), cl.getGrade(), copy.deepcopy(cl.getAssignments())))
+            tempClasses.append(self.phoenixClass(self.session, cl.getName(), cl.getURL(), cl.getNumerator(), cl.getDenominator(), cl.getGrade(), copy.deepcopy(cl.getAssignments())))
         
         #update
         self.update()
@@ -146,7 +146,7 @@ class phoenixChecker(object):
                  parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
                  #if new class, add it to the list, otherwise update URL/grade
                  if count >= len(self.classes):                     
-                    self.classes.append(phoenixClass(self.session, parenMinus.group(), 'https://portal.lcps.org/'+cols[5].find('a')['href'], 0, 0, mp2, []))
+                    self.classes.append(self.phoenixClass(self.session, parenMinus.group(), 'https://portal.lcps.org/'+cols[5].find('a')['href'], 0, 0, mp2, []))
                  else:
                     self.classes[count].setURL('https://portal.lcps.org/'+cols[5].find('a')['href'])
                     self.classes[count].setGrade(mp2)
