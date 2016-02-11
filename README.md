@@ -32,19 +32,14 @@ git pull
 
 
 **Usage:**
-
-phoenix [-h] {command [options], command [options] ...}
+USAGE: phoenix [-h] {command [options], command [options] ...}
 -h: print usage and exit
-
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
-
-print [-q, --quiet] [key1, key2, ...]: print all keys (-q, --quiet) or grades
-
+check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
+print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
-
-remove [key1, key2, ...]: remove specified accounts from database
-
-run [key1, key2, ...]: run checks, optional user key(s) for selective run
+remove [key1 key2 ...]: remove specified accounts from database
+run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print
 
 **Examples:**
 
@@ -69,9 +64,15 @@ To set the interval between checks and print a user 123456
 phoenix set -i print 123456
 ```
 
-To change a user (123456)  and run them (remove, add again, run)
+To change a user (123456)  and run them without output (remove, add again, run)
 ```
-phoenix remove 123456 add --no-continue run
+phoenix remove 123456 add --no-continue run --quiet
 ```
+
+To check all users without email, print checks
+```
+phoenix check --no-email print
+```
+
 
 Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.

@@ -71,7 +71,7 @@ def set(interval):# set intervals between events
     stuff.close()
 
 
-def run(botlist):# start the bots
+def run(botlist, quiet):# start the bots
     # open shelved data, set recursion limit
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
     stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
@@ -123,9 +123,9 @@ def run(botlist):# start the bots
                 else:# if the program continues without input, autotry (interval is over)
                     print('Autotrying...')
 
-        # iterate through list of bots, checking each
+        # iterate through list of bots, checking each, specifying bool echo as !quiet
         for b in bots:
-            b.check()
+            b.check(not quiet)
 
         # sync accounts database with checked bots
         accounts.sync()
@@ -159,6 +159,7 @@ def output(botlist, quiet):
     for bot in bots:
         bot.printGrades()
 
+
 def remove(botlist):
     if len(botlist) == 0:# if no keys specified, exit
         print("No keys entered. Specify accounts to delete and run again.")
@@ -182,23 +183,51 @@ def remove(botlist):
     accounts.sync()
     accounts.close()
 
+
+def check(botlist, quiet):
+    # open shelved data, set recursion limit
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    sys.setrecursionlimit(10000)
+
+    # import phoenixChecker class
+    phoenixChecker = getPhoenixChecker()
+    phoenixClass = getPhoenixClass()
+
+    # iterate through keys, removing if the account exists
+    bots = []
+    if len(bots) == 0:
+        for key in list(accounts.keys()):
+            bots.append(accounts[key])
+    else:
+        for key in botlist:
+            bots.append(accounts[key])
+    
+    # iterate through bots, checking each (includes email) if specified, updating each otherwise
+    if quiet:
+        for bot in bots:# update doesn't include echo or email
+            bot.update()
+    else:
+        for bot in bots:# check but don't echo
+            bot.check(False)
+
+    # sync and close database
+    accounts.sync()
+    accounts.close()
+
+
 # set menu for help/usage instructions
 HELPMENU = """USAGE: phoenix [-h] {command [options], command [options] ...}
 -h: print usage and exit
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
-print [-q, --quiet] [key1, key2, ...]: print all keys (-q, --quiet) or grades
+check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
+print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
-remove [key1, key2, ...]: remove specified accounts from database
-run [key1, key2, ...]: run checks, optional user key(s) for selective run"""
+remove [key1 key2 ...]: remove specified accounts from database
+run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""
 
 def arg_parse(args):# recursively parse argument list
     if len(args) == 0:# base case, if no arguments are left do nothing
         return
-    elif args[0] == 'run':
-        for i in range(1, len(args) + 1):# count all keys, pass all as list (including blank list)
-            if i >= len(args) or not args[i].isnumeric():
-                run(args[1:i])
-                arg_parse(args[i:])
     elif args[0] == 'set':
         if len(args) != 1 and (args[1] == '-t' or args[1] == '-i'):# include option
             set(args[1])
@@ -218,9 +247,12 @@ def arg_parse(args):# recursively parse argument list
             if i >= len(args) or not args[i].isnumeric():
                 remove(args[1:i])
                 arg_parse(args[i:])
-    elif args[0] == 'print':
+    elif args[0] == 'print' or args[0] == 'run' or args[0] == 'check':
         # set boolean quiet to whether quiet output is specified
-        quiet = len(args) > 1 and (args[1] == '-q' or args[1] == '--quiet')
+        if args[0] == 'check':
+            quiet = len(args)>1 and (args[1] == '-n' or args[1] == '--no-email')
+        else:
+            quiet = len(args) > 1 and (args[1] == '-q' or args[1] == '--quiet')
 
         # if quiet tag is specified, start counting keys one later
         if quiet:
@@ -228,9 +260,14 @@ def arg_parse(args):# recursively parse argument list
         else:
             start = 1
 
-        for i in range(start, len(args) + 1):# count all keys, pass all as list (in$
+        for i in range(start, len(args) + 1):# count all keys, pass all as list to either print or run
             if i >= len(args) or not args[i].isnumeric():
-                output(args[1:i], quiet)
+                if args[0] == 'run':
+                    run(args[start:i], quiet)
+                elif args[0] == 'print':
+                    output(args[start:i], quiet)
+                else:
+                    check(args[start:i], quiet)
                 arg_parse(args[i:])
     else:# if it's not a valid command print the help menu
         print(HELPMENU)

@@ -36,7 +36,7 @@ class phoenixChecker(object):
     def setEmail(self, email):#sets email
         self.email = email
 
-    def check(self):#checks for changes
+    def check(self, echo):#checks for changes
         #declare array
         tempClasses = []
 
@@ -47,8 +47,9 @@ class phoenixChecker(object):
         #update
         self.update()
         
-        #print grades
-        self.printGrades()
+        #print grades if 'echo' is specified
+        if echo:
+            self.printGrades()
         
         #logs changes
         changes = []
@@ -75,13 +76,15 @@ class phoenixChecker(object):
                 changes.append([classO.getName(), classO.getGrade() +  ' (' + str(classO.getNumerator()) + '/' + str(classO.getDenominator()) + ') -> ' + classN.getGrade() + ' (' + str(classN.getNumerator()) + '/' + str(classN.getDenominator()) + ')', newAs])
         
         if changes == []: #if blank, do nothing
-            print('No Changes')
+            if echo:
+                print('No Changes')
         else: #otherwise, print and email changes
             subject = 'Change to'
             message = 'All changes:\n'
            
             for change in changes:
-                print(change[0] + ' ' + change[1])
+                if echo:
+                    print(change[0] + ' ' + change[1])
                 subject += ' ' + change[0]
                 
                 #give overview of course
