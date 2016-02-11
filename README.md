@@ -4,6 +4,8 @@ Parses phoenix gradebook client and emails changes. Runs on at least Python 3.4.
 ![Example usage](http://i.imgur.com/TASMgCp.gif)
 Image above shows example usage; delays/loading time reduced for the sake of demonstration.
 
+
+
 **Installation:**
 
 For unix: run install script (assumes either pip module or compatible pip program are installed). Uninstall with uninstall (-n or --no-purge retains the accounts and settings data for small upgrades).
@@ -14,6 +16,7 @@ cd Phoenix-parse-email
 ```
 
 For anybody else: I can't guarentee compatibility, but the python files are simple enough that you can change the path in the 'phoenix' file to whatever directory you want and run it simply with python3 phoenix [options]. 
+
 
 
 **Upgrades:**
@@ -33,13 +36,22 @@ git pull
 
 **Usage:**
 USAGE: phoenix [-h] {command [options], command [options] ...}
+
 -h: print usage and exit
+
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
+
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
+
 print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
+
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
+
 remove [key1 key2 ...]: remove specified accounts from database
+
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print
+
+
 
 **Examples:**
 
@@ -73,6 +85,7 @@ To check all users without email, print checks
 ```
 phoenix check --no-email print
 ```
+
 
 
 Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.
