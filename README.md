@@ -35,7 +35,7 @@ git pull
 
 
 **Usage:**
-USAGE: phoenix [-h] {command [options], command [options] ...}
+phoenix [-h] {command [options], command [options] ...}
 
 -h: print usage and exit
 

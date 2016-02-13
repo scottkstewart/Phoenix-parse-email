@@ -247,6 +247,7 @@ def arg_parse(args):# recursively parse argument list
             if i >= len(args) or not args[i].isnumeric():
                 remove(args[1:i])
                 arg_parse(args[i:])
+                return
     elif args[0] == 'print' or args[0] == 'run' or args[0] == 'check':
         # set boolean quiet to whether quiet output is specified
         if args[0] == 'check':
@@ -269,6 +270,7 @@ def arg_parse(args):# recursively parse argument list
                 else:
                     check(args[start:i], quiet)
                 arg_parse(args[i:])
+                return
     else:# if it's not a valid command print the help menu
         print(HELPMENU)
 
