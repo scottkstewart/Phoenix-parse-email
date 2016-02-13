@@ -35,9 +35,14 @@ git pull
 
 
 **Usage:**
-phoenix [-h] {command [options], command [options] ...}
+phoenix [-h, --help] {command [options], command [options] ...}
 
--h: print usage and exit
+OPTIONS:
+
+-h, --help: print usage and exit
+
+
+COMMANDS:
 
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 

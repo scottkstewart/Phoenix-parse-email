@@ -216,8 +216,12 @@ def check(botlist, quiet):
 
 
 # set menu for help/usage instructions
-HELPMENU = """USAGE: phoenix [-h] {command [options], command [options] ...}
--h: print usage and exit
+HELPMENU = """phoenix [-h, --help] {command [options], command [options] ...}
+
+OPTION:
+-h, --help: print usage and exit
+
+COMMANDS:
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
 print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
@@ -226,7 +230,10 @@ remove [key1 key2 ...]: remove specified accounts from database
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""
 
 def arg_parse(args):# recursively parse argument list
-    if len(args) == 0:# base case, if no arguments are left do nothing
+    if len(args) == 0:# base case; if nothing is left to do, exit
+        return
+    elif args[0] == '-h' or args[0] == '--help':# if prompted for help menu, print help menu and exit
+        print(HELPMENU)
         return
     elif args[0] == 'set':
         if len(args) != 1 and (args[1] == '-t' or args[1] == '-i'):# include option
@@ -271,8 +278,12 @@ def arg_parse(args):# recursively parse argument list
                     check(args[start:i], quiet)
                 arg_parse(args[i:])
                 return
-    else:# if it's not a valid command print the help menu
-        print(HELPMENU)
+    else:# if it's not a valid command exit
+        print("PPE: Command '" + args[0] + "' not found. See 'phoenix --help'")
+        return
 
 if __name__ == "__main__": # main method; calls method to parse argument list ignoring script name
-    arg_parse(sys.argv[1:])
+    if len(sys.argv) == 1:
+        print("PPE: No commands entered. See 'phoenix --help'")
+    else:
+        arg_parse(sys.argv[1:])
