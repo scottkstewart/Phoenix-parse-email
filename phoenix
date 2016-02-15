@@ -246,7 +246,8 @@ OPTIONS:
 COMMANDS:
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
-print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
+print [-q, --quiet] [-v, --verbose] [key1 key2 ...]: print all keys (-q, --quiet) or grades
+    individual assignments can be viewed with -v or --verbose
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 remove [key1 key2 ...]: remove specified accounts from database
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""

@@ -271,6 +271,8 @@ class phoenixChecker(object):
         self.currentQuarter += 1
 
     def printGrades(self, quarter, verbose):#prints summary of grades
+        if quarter == 0:
+            quarter = self.currentQuarter
         #print the current time
         print('\n' + str(datetime.datetime.now()))
         
