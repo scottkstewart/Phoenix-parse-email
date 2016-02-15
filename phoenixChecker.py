@@ -74,7 +74,7 @@ class phoenixChecker(object):
         
         #print grades if 'echo' is specified
         if echo:
-            self.printGrades(quarter)
+            self.printGrades(quarter, False)
         
         #logs changes
         changes = []
@@ -161,7 +161,7 @@ class phoenixChecker(object):
     def update(self, quarter):
         # if current quarter is specified, prep for that
         if quarter == 0:
-            quarter = self.currentQuarter()
+            quarter = self.currentQuarter
         
         # get page based on quarter
         gradeBook = self.session.get(self.urls[quarter-1])
@@ -270,17 +270,18 @@ class phoenixChecker(object):
         # increment current quarter for human readibility (over list index notation)
         self.currentQuarter += 1
 
-    def printGrades(self, quarter):#prints summary of grades
+    def printGrades(self, quarter, verbose):#prints summary of grades
         #print the current time
         print('\n' + str(datetime.datetime.now()))
         
         #print header
         print('*'*19 + self.username + ' Q' + str(quarter) + '*'*20)
-       
+        
         #per class, print name and vertically aligned grades/num/denom
         for cl in self.classes:
-            print(cl.getName() + ': ' + '\t'*(3 - int((len(cl.getName())+2)/8))+ cl.getGrade()[quarter-1] + ' (' + str(cl.getNumerator()[quarter-1]) + '/' + str(cl.getDenominator()[quarter-1]) + ')')
-        
+            print(cl.getName() + ': ' + '\t'*(3 - int((len(cl.getName())+2)/8)) + str(cl.getGrade()[quarter-1]) + ' (' + str(cl.getNumerator()[quarter-1]) + '/' + str(cl.getDenominator()[quarter-1]) + ')')
+            if verbose:# if verbosity is specified, print individual assignments
+                cl.printAssignments(quarter)
         print('*'*48)
 
     def sendMail(self, message, subject):#sends emai

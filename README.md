@@ -49,7 +49,7 @@ add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
 
-print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
+print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades. Individual assignments can be viewed with -v or --verbose
 
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 
@@ -87,9 +87,9 @@ To change a user (123456)  and run them without output (remove, add again, run)
 phoenix remove 123456 add --no-continue run --quiet
 ```
 
-To check all users current quarter without email and print all quarters
+To check all users current quarter without email and print all quarters w/assignments
 ```
-phoenix check --no-email -Q all print
+phoenix check --no-email -Q all print -v
 ```
 
 

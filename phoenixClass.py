@@ -57,6 +57,10 @@ class phoenixClass(object):
     def getAssignments(self):#return list of assignments
         return self.assignments
 
+    def printAssignments(self, quarter):
+        for assignment in self.assignments[quarter-1]:
+            print("------>\t" + assignment[0] + ": " + assignment[1])
+
     def update(self, quarter):#update assignments/num/denom
         #instantiate session/get page
         page = self.session.get(self.url[quarter-1])
