@@ -16,17 +16,30 @@ class phoenixChecker(object):
         phoenixModule = imp.load_source('phoenixClass', os.getenv("HOME") + '/.PPE/phoenixClass.py'    )
         self.phoenixClass = phoenixModule.phoenixClass
 
-
+        # instantiate requests session for web parsing
         self.session = requests.session()
         
+        # instantiate basic user data
         self.username = user
         self.password = password
         self.email = email
-
+        
+        # instantiate current quarter, url in case of dual high-school enrollment, and all urls
+        self.currentQuarter = 0
+        self.deurl = []
+        self.urls = []
+        
+        # instantiate array of classes
         self.classes = []
         
-        self.update()
+        # log in and set urls
+        self.updatePage()
+        self.urlUpdate()
         
+        # update all grades
+        for i in range(len(self.urls)):
+            self.update(i)
+
     def setUsername(self, user):#sets username
         self.username = user
 
@@ -36,20 +49,32 @@ class phoenixChecker(object):
     def setEmail(self, email):#sets email
         self.email = email
 
-    def check(self, echo):#checks for changes
+    def check(self, echo, quarter):#checks for changes
+        # if current quarter is specified (0), prep for that
+        if quarter == 0:
+            quarter = self.currentQuarter
+
         #declare array
         tempClasses = []
 
         #create deep copy of classes
-        for cl in self.classes:
-            tempClasses.append(self.phoenixClass(self.session, cl.getName(), cl.getURL(), cl.getNumerator(), cl.getDenominator(), cl.getGrade(), copy.deepcopy(cl.getAssignments())))
+        for ind, cl in enumerate(self.classes):
+            #create class
+            tempClasses.append(self.phoenixClass(self.session, cl.getName()))
+            
+            #set all data
+            tempClasses[ind].setURL(cl.getURL()[quarter-1], quarter)
+            tempClasses[ind].setDenominator(cl.getDenominator())
+            tempClasses[ind].setNumerator(cl.getNumerator())
+            tempClasses[ind].setGrade(cl.getGrade()[quarter-1], quarter)
+            tempClasses[ind].setAssignments(cl.getAssignments())
         
         #update
-        self.update()
+        self.update(quarter)
         
         #print grades if 'echo' is specified
         if echo:
-            self.printGrades()
+            self.printGrades(quarter)
         
         #logs changes
         changes = []
@@ -59,13 +84,13 @@ class phoenixChecker(object):
                 
             #if numerator/denominator are different, log assignment changes
             if classO.getNumerator() != classN.getNumerator() or classO.getDenominator() != classN.getDenominator():
+                
                 #clears changes to this particular class
                 newAs = []
-                
-                for assignment in classN.getAssignments():#iterates through assignments
+                for assignment in classN.getAssignments()[quarter-1]:#iterates through assignments
                     new = True
 
-                    for temp in classO.getAssignments():#if it matches any, it isn't new
+                    for temp in classO.getAssignments()[quarter-1]:#if it matches any, it isn't new
                         if assignment[0] == temp[0] and assignment[1] == temp[1]:
                             new = False    
 
@@ -73,7 +98,7 @@ class phoenixChecker(object):
                         newAs.append([assignment[0], assignment[1]])
                 
                 #add change to log
-                changes.append([classO.getName(), classO.getGrade() +  ' (' + str(classO.getNumerator()) + '/' + str(classO.getDenominator()) + ') -> ' + classN.getGrade() + ' (' + str(classN.getNumerator()) + '/' + str(classN.getDenominator()) + ')', newAs])
+                changes.append([classO.getName(), classO.getGrade()[quarter-1] +  ' (' + str(classO.getNumerator()[quarter-1]) + '/' + str(classO.getDenominator()[quarter-1]) + ') -> ' + classN.getGrade()[quarter-1] + ' (' + str(classN.getNumerator()[quarter-1]) + '/' + str(classN.getDenominator()[quarter-1]) + ')', newAs])
         
         if changes == []: #if blank, do nothing
             if echo:
@@ -93,10 +118,14 @@ class phoenixChecker(object):
                 #add individual assignment changes
                 for assignment in change[2]:
                     message += '\n' + assignment[0] + ': ' + assignment[1]
+            
+            # add quarter to subject
+            subject += ' in quarter ' + quarter
+
             #send the email
             self.sendMail(message, subject)
-    
-    def update(self):
+   
+    def updatePage(self):
         #get page
         req = self.session.get('https://portal.lcps.org/Login_Student_PXP.aspx')
         page = BeautifulSoup(req.text, "lxml")
@@ -126,51 +155,133 @@ class phoenixChecker(object):
             'username': self.username,
             'password': self.password,
         }
-        #log in and get page
+        #log in
         logPage = self.session.post('https://portal.lcps.org/Login_Student_PXP.aspx', data=data, headers=headers)
-        gradeBook = self.session.get('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
+
+    def update(self, quarter):
+        # if current quarter is specified, prep for that
+        if quarter == 0:
+            quarter = self.currentQuarter()
+        
+        # get page based on quarter
+        gradeBook = self.session.get(self.urls[quarter-1])
         req =  BeautifulSoup(gradeBook.text, 'lxml')
         self.gradeTable = req.findAll('table', {'class':'info_tbl'})
         
+        # if enrolled in two schools, append earlier table
+        if len(self.deurl) > 0:
+            gradeBook = self.session.get(self.deurl[quarter-1])
+            req =  BeautifulSoup(gradeBook.text, 'lxml')
+            self.gradeTable[0] = req.find('table', {'class':'info_tbl'})
+
         count = 0
 
         for i in range(len(self.gradeTable)): #iterate through schools
-             
-             rows = self.gradeTable[i].findAll('tr') #get rows of table
-             for tr in rows[i + 1:]:# workaround for multivariable calculus
-                 #get columns per row
-                 cols = tr.findAll('td')
+            
+            rows = self.gradeTable[i].findAll('tr') #get rows of table
+            for tr in rows[i + 1:]:# workaround for multivariable calculus
+                #get columns per row
+                cols = tr.findAll('td')
+                     
+                #find course title and grade
+                courseTitle = cols[1].text
+                mp2 = cols[5].text
                  
-                 #find course title and grade
-                 courseTitle = cols[1].text
-                 mp2 = cols[5].text
-                 
-                 #remove parentheses from course title
-                 parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
-                 #if new class, add it to the list, otherwise update URL/grade
-                 if count >= len(self.classes):                     
-                    self.classes.append(self.phoenixClass(self.session, parenMinus.group(), 'https://portal.lcps.org/'+cols[5].find('a')['href'], 0, 0, mp2, []))
-                 else:
-                    self.classes[count].setURL('https://portal.lcps.org/'+cols[5].find('a')['href'])
-                    self.classes[count].setGrade(mp2)
-                 
-                 #update num/denom/assignments
-                 self.classes[count].update()
+                #remove parentheses from course title
+                parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
+                #if new class, add it to the list
+                if count >= len(self.classes):                     
+                    self.classes.append(self.phoenixClass(self.session, parenMinus.group()))
+                
+                # update grade/url
+                self.classes[count].setGrade(mp2, quarter)
+                self.classes[count].setURL('https://portal.lcps.org/'+cols[5].find('a')['href'], quarter)
+                #update num/denom/assignments
+                self.classes[count].update(quarter) 
                     
-                 count += 1
+                count += 1
     
-    def printGrades(self):#prints summary of grades
+    def urlUpdate(self):
+        #get general page
+        gradeBook = self.session.get('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
+        req =  BeautifulSoup(gradeBook.text, 'lxml')
+        pageURLS = req.findAll('div', {'class':'heading_breadcrumb'})
+       
+        
+        self.currentQuarter = 0
+        self.deurl = []
+        if len(pageURLS) == 2:# if multiple sets of urls, set urls to quarters for other school
+            # set url to later class after this one
+            pageURL = pageURLS[1]
+            
+            
+            rawurls = []
+            currentQuarterBool = [True for i in range(4)]
+            for mp in pageURLS[0].findAll('a'):# find current quarter and rawurls
+                rawurls.append('https://portal.lcps.org/'+mp['href'])
+            
+                for i in range(1, 5):
+                    if int(mp.text[15]) == i:
+                        currentQuarterBool[i-1] = False
+            
+            # convert current quarter to number
+            for ind, cur in enumerate(currentQuarterBool):
+                if cur:
+                    self.currentQuarter = ind
+            
+            # append urls to list, appending home page at current quarter
+            for ind, url in enumerate(rawurls):
+                if ind == self.currentQuarter:
+                    self.deurl.append('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
+
+                self.deurl.append(url)
+        else:# if no other school, set list of urls to first list
+            pageURL = pageURLS[0]
+        
+        rawurls = []
+        
+        # specify whether current quarter has already been found
+        noDE = self.currentQuarter == 0
+
+        if noDE:
+            currentQuarterBool = [True for i in range(4)]
+        
+        for mp in pageURL.findAll('a'):# get raw urls, current quarter if not already found
+            rawurls.append('https://portal.lcps.org/'+mp['href'])
+            
+            if noDE:
+                for i in range(1, 5):
+                    if int(mp.text[15]) == i:
+                        currentQuarterBool[i-1] = False
+        
+        if noDE:# convert current quarter to int if not already found
+            self.currentQuarter = 0
+            for ind, cur in enumerate(currentQuarterBool):
+                if cur:
+                    self.currentQuarter = ind
+        
+        self.urls = []
+        for ind, url in enumerate(rawurls):# append urls, with homepage for current quarter
+            if ind == self.currentQuarter:
+                self.urls.append('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
+
+            self.urls.append(url)
+        
+        # increment current quarter for human readibility (over list index notation)
+        self.currentQuarter += 1
+
+    def printGrades(self, quarter):#prints summary of grades
         #print the current time
         print('\n' + str(datetime.datetime.now()))
         
         #print header
-        print('*'*19 + self.username + '*'*19)
+        print('*'*19 + self.username + ' Q' + str(quarter) + '*'*20)
        
         #per class, print name and vertically aligned grades/num/denom
         for cl in self.classes:
-            print(cl.getName() + ': ' + '\t'*(3 - int((len(cl.getName())+2)/8))+ cl.getGrade() + ' (' + str(cl.getNumerator()) + '/' + str(cl.getDenominator()) + ')')
+            print(cl.getName() + ': ' + '\t'*(3 - int((len(cl.getName())+2)/8))+ cl.getGrade()[quarter-1] + ' (' + str(cl.getNumerator()[quarter-1]) + '/' + str(cl.getDenominator()[quarter-1]) + ')')
         
-        print('*'*44)
+        print('*'*48)
 
     def sendMail(self, message, subject):#sends emai
         #instantiate smtp server

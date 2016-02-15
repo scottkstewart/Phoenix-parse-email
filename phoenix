@@ -71,7 +71,7 @@ def set(interval):# set intervals between events
     stuff.close()
 
 
-def run(botlist, quiet):# start the bots
+def run(botlist, quiet, quarter):# start the bots
     # open shelved data, set recursion limit
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
     stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
@@ -125,7 +125,12 @@ def run(botlist, quiet):# start the bots
 
         # iterate through list of bots, checking each, specifying bool echo as !quiet
         for b in bots:
-            b.check(not quiet)
+            # if quarter signifies all, check all quarters, otherwise check the specified quarter
+            if quarter == -1:
+                for i in range(1, 5):
+                    b.check(not quiet, i)
+            else:
+                b.check(not quiet, quarter)
 
         # sync accounts database with checked bots
         accounts.sync()
@@ -133,13 +138,14 @@ def run(botlist, quiet):# start the bots
         #sleep for specified time
         time.sleep(sleepInterval)
 
-def output(botlist, quiet):
+def output(botlist, quiet, quarter):
     # open shelved data, set recursion limit
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
     sys.setrecursionlimit(10000)
 
     # import phoenixChecker class
     phoenixChecker = getPhoenixChecker()
+    phoenixClass = getPhoenixClass()
 
     if quiet:# if quiet, list all keys and exit
         for key in list(accounts.keys()):
@@ -157,7 +163,12 @@ def output(botlist, quiet):
 
     # print grades for each bot
     for bot in bots:
-        bot.printGrades()
+        # if all quarters is specified, print all 4 quarters, otherwise print specified quarter
+        if quarter == -1:
+            for i in range(1, 5):
+                bot.printGrades(i)
+        else:
+            bot.printGrades(quarter)
 
 
 def remove(botlist):
@@ -184,7 +195,7 @@ def remove(botlist):
     accounts.close()
 
 
-def check(botlist, quiet):
+def check(botlist, quiet, quarter):
     # open shelved data, set recursion limit
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
     sys.setrecursionlimit(10000)
@@ -205,10 +216,19 @@ def check(botlist, quiet):
     # iterate through bots, checking each (includes email) if specified, updating each otherwise
     if quiet:
         for bot in bots:# update doesn't include echo or email
-            bot.update()
+            # if all quarters are specified, update 1-4, otherwise update specified
+            if quarter == -1:
+                for i in range(1, 5):
+                    bot.update(i)
+            else:
+                bot.update(quarter)
     else:
         for bot in bots:# check but don't echo
-            bot.check(False)
+            if quarter == -1:
+                for i in range(1, 5):
+                    bot.update(i)
+            else:
+                bot.check(False, quarter)
 
     # sync and close database
     accounts.sync()
@@ -216,10 +236,11 @@ def check(botlist, quiet):
 
 
 # set menu for help/usage instructions
-HELPMENU = """phoenix [-h, --help] {command [options], command [options] ...}
+HELPMENU = """phoenix [options] {command [modifiers] command [modifiers] ...}
 
-OPTION:
+OPTIONS:
 -h, --help: print usage and exit
+-Q n: applies commands to quarter n (1-4), default current, n = all for every Q
 
 COMMANDS:
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
@@ -229,31 +250,39 @@ set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 remove [key1 key2 ...]: remove specified accounts from database
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""
 
-def arg_parse(args):# recursively parse argument list
+def arg_parse(args, quarter):# recursively parse argument list based on quarter (0 = current q)
     if len(args) == 0:# base case; if nothing is left to do, exit
         return
+    elif args[0] == '-Q':# if prompted to set quarter, validate and set
+        if args[1] == 'all':# all = -1
+            arg_parse(args[2:], -1)
+        elif args[1].isnumeric() and int(args[1]) >= 1 and int(args[1]) <= 4:# 1 <= n <= 4
+            arg_parse(args[2:], int(args[1]))
+        else:# if invalid, print message and end
+            print("Option '-Q " + args[1] + "' not valid. See 'phoenix --help'.")
+            return
     elif args[0] == '-h' or args[0] == '--help':# if prompted for help menu, print help menu and exit
         print(HELPMENU)
         return
     elif args[0] == 'set':
         if len(args) != 1 and (args[1] == '-t' or args[1] == '-i'):# include option
             set(args[1])
-            arg_parse(args[2:])
+            arg_parse(args[2:], quarter)
         else:# don't include option
             set('')
-            arg_parse(args[1:])
+            arg_parse(args[1:], quarter)
     elif args[0] == 'add':
         if len(args) > 1 and (args[1] == '-n' or args[1] == '--no-continue'):# include nocontinue
             add(True)
-            arg_parse(args[2:])
+            arg_parse(args[2:], quarter)
         else:# don't include nocontinue
             add(False)
-            arg_parse(args[1:])
+            arg_parse(args[1:], quarter)
     elif args[0] == 'remove':
         for i in range(1, len(args) + 1):# count all keys, pass all as list (in$
             if i >= len(args) or not args[i].isnumeric():
                 remove(args[1:i])
-                arg_parse(args[i:])
+                arg_parse(args[i:], quarter)
                 return
     elif args[0] == 'print' or args[0] == 'run' or args[0] == 'check':
         # set boolean quiet to whether quiet output is specified
@@ -271,12 +300,12 @@ def arg_parse(args):# recursively parse argument list
         for i in range(start, len(args) + 1):# count all keys, pass all as list to either print or run
             if i >= len(args) or not args[i].isnumeric():
                 if args[0] == 'run':
-                    run(args[start:i], quiet)
+                    run(args[start:i], quiet, quarter)
                 elif args[0] == 'print':
-                    output(args[start:i], quiet)
+                    output(args[start:i], quiet, quarter)
                 else:
-                    check(args[start:i], quiet)
-                arg_parse(args[i:])
+                    check(args[start:i], quiet, quarter)
+                arg_parse(args[i:], quarter)
                 return
     else:# if it's not a valid command exit
         print("PPE: Command '" + args[0] + "' not found. See 'phoenix --help'")
@@ -286,4 +315,4 @@ if __name__ == "__main__": # main method; calls method to parse argument list ig
     if len(sys.argv) == 1:
         print("PPE: No commands entered. See 'phoenix --help'")
     else:
-        arg_parse(sys.argv[1:])
+        arg_parse(sys.argv[1:], 0)

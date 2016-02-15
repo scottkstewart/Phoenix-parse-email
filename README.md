@@ -35,12 +35,13 @@ git pull
 
 
 **Usage:**
-phoenix [-h, --help] {command [options], command [options] ...}
+phoenix [options] {command [modifiers] command [modifiers] ...}
 
 OPTIONS:
 
 -h, --help: print usage and exit
 
+-Q n: applies commands to quarter n (1-4), default current, n = all for every Q
 
 COMMANDS:
 
@@ -71,9 +72,9 @@ phoenix add --no-continue
 phoenix run
 ```
 
-To run all users at any point
+To run all users at quarter 2
 ```
-phoenix run
+phoenix -Q 2 run
 ```
 
 To set the interval between checks and print a user 123456
@@ -86,9 +87,9 @@ To change a user (123456)  and run them without output (remove, add again, run)
 phoenix remove 123456 add --no-continue run --quiet
 ```
 
-To check all users without email, print checks
+To check all users current quarter without email and print all quarters
 ```
-phoenix check --no-email print
+phoenix check --no-email -Q all print
 ```
 
 
