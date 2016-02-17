@@ -49,7 +49,7 @@ class phoenixChecker(object):
     def setEmail(self, email):#sets email
         self.email = email
 
-    def check(self, echo, quarter):#checks for changes
+    def check(self, echo, verbose, quarter):#checks for changes
         # update all urls for gradebook pages (not classes)
         self.urlUpdate()
         
@@ -77,7 +77,7 @@ class phoenixChecker(object):
         
         #print grades if 'echo' is specified
         if echo:
-            self.printGrades(quarter, False)
+            self.printGrades(quarter, verbose)
         
         #logs changes
         changes = []

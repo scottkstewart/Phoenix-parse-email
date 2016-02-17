@@ -43,6 +43,8 @@ OPTIONS:
 
 -Q n: applies commands to quarter n (1-4), default current, n = all for every Q
 
+-v, --verbose: includes assignments while printing grades
+
 COMMANDS:
 
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
