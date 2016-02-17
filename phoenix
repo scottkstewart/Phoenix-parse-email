@@ -217,6 +217,8 @@ def check(botlist, quiet, quarter):
     # iterate through bots, checking each (includes email) if specified, updating each otherwise
     if quiet:
         for bot in bots:# update doesn't include echo or email
+            # update all urls for page
+            bot.urlUpdate()
             # if all quarters are specified, update 1-4, otherwise update specified
             if quarter == -1:
                 for i in range(1, 5):
@@ -315,6 +317,9 @@ def arg_parse(args, quarter):# recursively parse argument list based on quarter 
                     check(args[start:i], quiet, quarter)
                 arg_parse(args[i:], quarter)
                 return
+    elif args[0] == 'test':
+        test()
+        return
     else:# if it's not a valid command exit
         print("PPE: Command '" + args[0] + "' not found. See 'phoenix --help'")
         return

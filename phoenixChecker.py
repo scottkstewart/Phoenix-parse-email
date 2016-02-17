@@ -50,6 +50,9 @@ class phoenixChecker(object):
         self.email = email
 
     def check(self, echo, quarter):#checks for changes
+        # update all urls for gradebook pages (not classes)
+        self.urlUpdate()
+        
         # if current quarter is specified (0), prep for that
         if quarter == 0:
             quarter = self.currentQuarter
