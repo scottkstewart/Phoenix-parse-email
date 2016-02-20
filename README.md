@@ -1,10 +1,12 @@
 # Phoenix-parse-email
-Parses phoenix gradebook client and emails changes. Runs on at least Python 3.4. Files contained in ~/.PPE/.
+Unix utility which parses the Phoenix gradebook client and emails changes. Runs on at least Python 3.4. Files contained in ~/.PPE/.
 
-![Example usage](http://i.imgur.com/TASMgCp.gif)
+![Example usage](http://i.imgur.com/neM2Kb7.gif)
 Image above shows example usage; delays/loading time reduced for the sake of demonstration.
 
+**Dependencies**
 
+Pip for installation, various python modules (beautifulsoup4, requests, lxml, daemonize)
 
 **Installation:**
 
@@ -15,7 +17,7 @@ cd Phoenix-parse-email
 ./install
 ```
 
-For anybody else: I can't guarentee compatibility, but the python files are simple enough that you can change the path in the 'phoenix' file to whatever directory you want and run it simply with python3 phoenix [options]. 
+For anybody else: some files may work, but the following functionalities are unix-specific: password masking (getpass), daemonization, and installation through the bash script. Porting to windows requires paths in all files to be rewritten to folder in program files, and several functionalities will be broken. 
 
 
 
@@ -51,9 +53,13 @@ add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
 
-print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades. Individual assignments can be viewed with -v or --verbose
+kill: kills daemon (started by start)
+
+print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades.
 
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
+
+start [key1 key2 ...]: forks run to daemon (PID file=~/.PPE/ppe.pid); keys optional
 
 remove [key1 key2 ...]: remove specified accounts from database
 

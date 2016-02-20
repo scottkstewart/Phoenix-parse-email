@@ -7,6 +7,8 @@ import os
 import time
 import urllib.request
 import select
+import signal
+from daemonize import Daemonize
 
 def getPhoenixChecker():# import phoenix checker
     # get module containing class
@@ -237,6 +239,35 @@ def check(botlist, quiet, quarter):
     accounts.sync()
     accounts.close()
 
+def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
+    try:# try to open pid file
+        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+    except FileNotFoundError:# if the file doesn't exist, start daemon
+        # define action for daemon as run w/specified botlist, quiet, quarter
+        daemonAction = lambda: run("", True, False, quarter)
+        
+        # fork process to daemon
+        daemon = Daemonize(app="phoenix-parse-email", pid=(os.getenv("HOME") + '/.PPE/ppe.pid'), action=daemonAction)
+        print("Forking to daemon (PID file=~/PPE/ppe.pid)...")
+        daemon.start()
+    else:# if the file does exist already, print message and don't fork
+        print("PID already exists (" + str(pid) + "). Try 'phoenix kill'")
+
+def daemon_exit():# kill daemon w/PID ~/.PPE/ppe.pid
+    try:# try to open pid file
+        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+    except FileNotFoundError:# if not found, send a message
+        print("PID not found (PPE is not currently running).")
+    else:# if the file exists, send sigterm to kill it
+        os.kill(pid, signal.SIGTERM)
+        print("Killed PPE (PID=" + str(pid) + ").")
+
+def get_botlist(args):# iterate through arguments to give a list of the keys following a command
+    for ind, key in enumerate(args):
+        if not key.isnumeric():
+            return args[0:ind]
+    
+    return args
 
 # set menu for help/usage instructions
 HELPMENU = """phoenix [options] {command [modifiers] command [modifiers] ...}
@@ -249,8 +280,10 @@ OPTIONS:
 COMMANDS:
 add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
+kill: kills daemon (started by start)
 print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
+start [key1 key2 ...]: forkes run to daemon (PID file=~/.PPE/ppe.pid); keys optional
 remove [key1 key2 ...]: remove specified accounts from database
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""
 
@@ -270,6 +303,15 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
     elif args[0] == '-h' or args[0] == '--help':# if prompted for help menu, print help menu and exit
         print(HELPMENU)
         return
+    elif args[0] == 'start':
+        # get botlist after argument, start daemon, and call arg_parse with the appropriate arguments
+        botlist = get_botlist(args[1:])
+        daemon_start(botlist, quarter)
+        arg_parse(args[1+len(botlist):], quarter, verbose)
+    elif args[0] == 'kill':
+        # kill daemon and call arg_parse
+        daemon_exit()
+        arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'set':
         if len(args) != 1 and (args[1] == '-t' or args[1] == '-i'):# include option
             set(args[1])
@@ -290,32 +332,39 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
                 remove(args[1:i])
                 arg_parse(args[i:], quarter, verbose)
                 return
-    elif args[0] == 'print' or args[0] == 'run' or args[0] == 'check':
+    elif args[0] == 'print' or args[0] == 'run':
         # set boolean quiet to whether quiet output is specified
-        if args[0] == 'check':
-            quiet = len(args)>1 and (args[1] == '-n' or args[1] == '--no-email')
-        else:
-            quiet = len(args) > 1 and (args[1] == '-q' or args[1] == '--quiet')
+        quiet = len(args) > 1 and (args[1] == '-q' or args[1] == '--quiet')
 
         # if quiet tag is specified, start counting keys one later
         if quiet:
             start = 2
         else:
             start = 1
+        
+        # get botlist and call appropriate command
+        botlist = get_botlist(args[start:])
+        if args[0] == 'run':
+            run(botlist, quiet, verbose, quarter)
+        else::
+            output(botlist, quiet, verbose, quarter)
+        
+        # call arg_parse with appropriate arguments
+        arg_parse(args[start+len(botlist):], quarter, verbose)
+    elif args[0] == 'check':
+        # set boolean quiet to whether quiet output is specified
+        quiet = len(args) > 1 and (args[1] == '-n' or args[1] == '--no-email')
 
-        for i in range(start, len(args) + 1):# count all keys, pass all as list to either print or run
-            if i >= len(args) or not args[i].isnumeric():
-                if args[0] == 'run':
-                    run(args[start:i], quiet, verbose, quarter)
-                elif args[0] == 'print':
-                    output(args[start:i], quiet, verbose, quarter)
-                else:
-                    check(args[start:i], quiet, quarter)
-                arg_parse(args[i:], quarter, verbose)
-                return
-    elif args[0] == 'test':
-        test()
-        return
+        # if quiet tag is specified, start counting keys one later
+        if quiet:
+            start = 2
+        else:
+            start = 1
+        
+        # get botlist, call check, and call arg_parse
+        botlist = get_botlist(args[start:])
+        check(botlist, quiet, quarter)
+        arg_parse(args[start+len(botlist):], quarter, verbose)
     else:# if it's not a valid command exit (-... == option)
         if args[0][0] == '-':
             print("PPE: Option '" + args[0] + "' not found. See phoenix --help'")
