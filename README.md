@@ -4,6 +4,14 @@ Unix utility which parses the Phoenix gradebook client and emails changes. Runs 
 ![Example usage](http://i.imgur.com/neM2Kb7.gif)
 Image above shows example usage; delays/loading time reduced for the sake of demonstration.
 
+**How it works**
+
+Phoenix-parse-email (PPE) is a utility wrote for unix which incorperates several tools to gather, output, and monitor Loudoun County students' grades via the Phoenix Gradebook Client. It does so by storing (shelve) several 'phoenixChecker' objects (accounts.db), each of which contains the URLS to each individual quarter in the gradebook and a list of 8 'phoenixClass' objects. Each of these 'phoenixClass' objects contains lists of 4 (one for each quarter) urls, percentage/letter grades, and lists of assignments. All of this data is manipulated via commands in the 'phoenix' script, which call functions of the 'phoenixChecker' class that are largely dependent on the 'phoenixClass' class.
+
+PPE was created initially as a project to learn computer science concepts past the curriculum of AP Computer science, but now serves as a serious utility for checking grades. It now has the functionality to do the following: (add) persistent 'phoenixClass' objects which correspond to a single student account; (check) any or all accounts, with or without email updates; (start) and (kill) daemonized run processes to email differences; (set) intervals between automatic retries in bad connection and between checks with run; (remove) users from database of accounts; and (run) checks on any number of accounts, with or without echoing the grades as they are checked.
+
+Though PPE is a utility designed to be versatile and easy to use, it is not created to be a wide-reaching program for all users; installation is likely to be a bit difficult and support is not likely to ever come to non-unix systems. The fact of the matter is, this is a personal tool, and I can only guarentee compatibility with systems that I've personally seen compatible: linux mint, debian GNU/Linux, and arch linux.
+
 **Dependencies**
 
 Pip for installation, various python modules (beautifulsoup4, requests, lxml, daemonize)
@@ -90,9 +98,9 @@ To set the interval between checks and print a user 123456
 phoenix set -i print 123456
 ```
 
-To change a user (123456)  and run them without output (remove, add again, run)
+To remove a user (123456) and run another user (654321) as daemon
 ```
-phoenix remove 123456 add --no-continue run --quiet
+phoenix remove 123456 start 654321
 ```
 
 To check all users current quarter without email and print all quarters w/assignments
@@ -100,6 +108,9 @@ To check all users current quarter without email and print all quarters w/assign
 phoenix check --no-email -Q all print -v
 ```
 
+**Autorun**
+
+To set the script to run automatically as a daemon, use whatever init system works best for you. For example, a desktop user who uses their computer exclusively through the x window system may want to write in the line 'phoenix start' to their ~/.xinitrc or ~/.xsession file. A user who wants the script to run automatically on a computer which doesn't always have an X session running (not sure about wayland) may want to write a file into /etc/init.d to execute the script on startup.
 
 
 Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.

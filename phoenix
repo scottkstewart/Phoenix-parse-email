@@ -346,7 +346,7 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
         botlist = get_botlist(args[start:])
         if args[0] == 'run':
             run(botlist, quiet, verbose, quarter)
-        else::
+        else:
             output(botlist, quiet, verbose, quarter)
         
         # call arg_parse with appropriate arguments
