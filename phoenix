@@ -72,11 +72,8 @@ def set(interval):# set intervals between events
 
     stuff.close()
 
-
 def run(botlist, quiet, verbose, quarter):# start the bots
-    # open shelved data, set recursion limit
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    # open shelved data set recursion limit
     sys.setrecursionlimit(10000)
 
     # import phoenixChecker class
@@ -84,6 +81,7 @@ def run(botlist, quiet, verbose, quarter):# start the bots
     phoenixClass = getPhoenixClass()
 
     # instantiate list of all used phoenix checkers
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
     bots = []
     if len(botlist) == 0:# if list of bots is empty check all in accounts database
         for key in list(accounts.keys()):
@@ -91,9 +89,14 @@ def run(botlist, quiet, verbose, quarter):# start the bots
     else:# otherwise iterate through all bots in list
         for key in botlist:
             bots.append(accounts[key])
+    accounts.close()
 
     # checks each account, syncs with shelve, and waits for specified interval
     while True:
+        # open accounts
+        accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+        stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+        
         # get sleep/autotry intervals
         sleepInterval = stuff['interval']
         autotryInterval = stuff['autotry']
@@ -136,9 +139,12 @@ def run(botlist, quiet, verbose, quarter):# start the bots
 
         # sync accounts database with checked bots
         accounts.sync()
+        accounts.close()
+        stuff.close()
 
         #sleep for specified time
         time.sleep(sleepInterval)
+
 
 def output(botlist, quiet, verbose, quarter):
     # open shelved data, set recursion limit
@@ -241,7 +247,7 @@ def check(botlist, quiet, quarter):
 
 def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
     try:# try to open pid file
-        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+        pid = int(open(os.getenv("HOME") + '~/.PPE/ppe.pid').read())
     except FileNotFoundError:# if the file doesn't exist, start daemon
         # define action for daemon as run w/specified botlist, quiet, quarter
         daemonAction = lambda: run("", True, False, quarter)
@@ -288,6 +294,7 @@ remove [key1 key2 ...]: remove specified accounts from database
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""
 
 def arg_parse(args, quarter, verbose):# recursively parse argument list based on quarter (0 = current q) and verbosity
+    
     if len(args) == 0:# base case; if nothing is left to do, exit
         return
     elif args[0] == '-v' or args[0] == '--verbose':
