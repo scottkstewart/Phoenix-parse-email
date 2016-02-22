@@ -107,13 +107,27 @@ class phoenixChecker(object):
         if changes == []: #if blank, do nothing
             if echo:
                 print('No Changes')
-        else: #otherwise, print and email changes
+        else: #otherwise, print, log, and email changes
             subject = 'Change to'
             message = 'All changes:\n'
-           
+            
+            # read log and delete lines past 1000
+            logfile = open(os.getenv("HOME") + '/.PPE/log', 'r')
+            log = logfile.readlines()
+            logfile.close()
+            if len(log) + len(changes) > 1000:
+                log = log[len(changes):]
+
+            new = []
             for change in changes:
+                # add change to log
+                new.append('[' + self.username + '] [' + str(datetime.datetime.now()) + '] ' + change[0] + ' ' + change[1])
+                 
+                # print change
                 if echo:
                     print(change[0] + ' ' + change[1])
+                
+                # add to subject
                 subject += ' ' + change[0]
                 
                 #give overview of course
@@ -122,9 +136,14 @@ class phoenixChecker(object):
                 #add individual assignment changes
                 for assignment in change[2]:
                     message += '\n' + assignment[0] + ': ' + assignment[1]
-            
+           
+            # overwrite log file with new file
+            logfile = open(os.getenv("HOME") + '/.PPE/log', 'w')
+            logfile.write(''.join(log) + "\n".join(new) + "\n")
+            logfile.close()
+
             # add quarter to subject
-            subject += ' in quarter ' + quarter
+            subject += ' in quarter ' + str(quarter)
 
             #send the email
             self.sendMail(message, subject)

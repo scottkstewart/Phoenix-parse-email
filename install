@@ -58,10 +58,18 @@ if [ ! -d ~/.PPE/ ]; then
     echo "Creating ~/.PPE/"
     mkdir ~/.PPE
 fi
- 
+
 echo "Copying files to ~/.PPE/"
 cp phoenixChecker.py ~/.PPE/phoenixChecker.py
 cp phoenixClass.py ~/.PPE/phoenixClass.py
- 
-echo "Installing Phoenix-Parse-Email"
+
+# If log doesn't already exist create one
+if [ ! -r ~/.PPE/log ]; then
+    echo "Creating log file"
+    touch ~/.PPE/log
+fi
+
+echo "Installing Phoenix-Parse-Email..."
 sudo cp phoenix /usr/bin/phoenix
+
+echo "Installation complete. Try starting with 'phoenix set add start'."
