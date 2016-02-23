@@ -65,14 +65,15 @@ kill: kills daemon (started by start)
 
 print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades.
 
-set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
-
-start [key1 key2 ...]: forks run to daemon (PID file=~/.PPE/ppe.pid); keys optional
-
 remove [key1 key2 ...]: remove specified accounts from database
 
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print
 
+set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
+
+start [key1 key2 ...]: forks run to daemon (PID file=~/.PPE/ppe.pid); keys optional
+
+status: prints various pieces of information relating to the program's status
 
 
 **Examples:**

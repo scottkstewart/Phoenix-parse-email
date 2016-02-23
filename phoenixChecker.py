@@ -43,11 +43,20 @@ class phoenixChecker(object):
     def setUsername(self, user):#sets username
         self.username = user
 
+    def getUsername(self):# returns username
+        return self.username
+
     def setPassword(self, password):#sets password
         self.password = password
 
+    def getPassword(self):# returns password
+        return self.password
+
     def setEmail(self, email):#sets email
         self.email = email
+
+    def getEmail(self):# returns email
+        return self.email
 
     def check(self, echo, verbose, quarter):#checks for changes
         # update all urls for gradebook pages (not classes)

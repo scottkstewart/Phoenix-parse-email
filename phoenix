@@ -37,11 +37,10 @@ def add(nocontinue):# add user to list of bots
         password = getpass.getpass("Password: ")
         email = input("Email: ")
 
-        # instantiate bot
-        bot = phoenixChecker(username, password, email)
-
-        # shelve bot for long term storage
-        accounts[username] = bot
+        # instantiate bot and shelve (prompt on overwrite)
+        if not (username in accounts.keys()) or input("Account " + username + " already exists. Overwrite? (y/n): ").lower() == 'y':
+            bot = phoenixChecker(username, password, email)
+            accounts[username] = bot
 
         if nocontinue:# if nocontinue is specified, stop after one iteration
             cont = 'n'
@@ -80,16 +79,26 @@ def run(botlist, quiet, verbose, quarter):# start the bots
     phoenixChecker = getPhoenixChecker()
     phoenixClass = getPhoenixClass()
 
-    # instantiate list of all used phoenix checkers
+    # instantiate list of all used phoenix checkers and shelve list of keys running
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff', writeback=True)
     bots = []
     if len(botlist) == 0:# if list of bots is empty check all in accounts database
         for key in list(accounts.keys()):
             bots.append(accounts[key])
+
+        stuff['botlist'] = list(accounts.keys())
     else:# otherwise iterate through all bots in list
+        stuff['botlist'] = []
         for key in botlist:
             bots.append(accounts[key])
+            stuff['botlist'].append(key)
+    
+    # sync stuff and close all databases
+    stuff.sync()
+    stuff.close()    
     accounts.close()
+
 
     # checks each account, syncs with shelve, and waits for specified interval
     while True:
@@ -140,6 +149,8 @@ def run(botlist, quiet, verbose, quarter):# start the bots
         # sync accounts database with checked bots
         accounts.sync()
         accounts.close()
+        
+        # sync stuff database (botlist)
         stuff.close()
 
         #sleep for specified time
@@ -149,6 +160,7 @@ def run(botlist, quiet, verbose, quarter):# start the bots
 def output(botlist, quiet, verbose, quarter):
     # open shelved data, set recursion limit
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
     sys.setrecursionlimit(10000)
 
     # import phoenixChecker class
@@ -245,16 +257,40 @@ def check(botlist, quiet, quarter):
     accounts.sync()
     accounts.close()
 
+def status():# print information on status of program
+    try:# try to open pid file
+        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+    except FileNotFoundError:
+        print("Daemon: not currently running.")
+        running = False
+    else:
+        print("Daemon: running (PID=" + str(pid) + ")")
+        running = True
+
+    print("The following bots are logged (R = running):")
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    for key in accounts.keys():
+        runningLetter = ''
+        if running:
+            for runningKey in stuff['botlist']:
+                if runningKey == key:
+                    runningLetter = '(R)'
+                    break
+        
+        print(runningLetter + '\t' + key)
+
+
 def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
     try:# try to open pid file
-        pid = int(open(os.getenv("HOME") + '~/.PPE/ppe.pid').read())
+        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
     except FileNotFoundError:# if the file doesn't exist, start daemon
         # define action for daemon as run w/specified botlist, quiet, quarter
-        daemonAction = lambda: run("", True, False, quarter)
+        daemonAction = lambda: run(botlist, True, False, quarter)
         
         # fork process to daemon
         daemon = Daemonize(app="phoenix-parse-email", pid=(os.getenv("HOME") + '/.PPE/ppe.pid'), action=daemonAction)
-        print("Forking to daemon (PID file=~/PPE/ppe.pid)...")
+        print("Forking to daemon (PID file=~/.PPE/ppe.pid)...")
         daemon.start()
     else:# if the file does exist already, print message and don't fork
         print("PID already exists (" + str(pid) + "). Try 'phoenix kill'")
@@ -288,13 +324,13 @@ add [-n, --no-continue]: add/change users (-n or --no-continue for one user)
 check [-n, --no-email] [key1 key2 ...]: check grades, default with email on change
 kill: kills daemon (started by start)
 print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
+remove [key1 key2 ...]: remove specified accounts from database
+run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 start [key1 key2 ...]: forkes run to daemon (PID file=~/.PPE/ppe.pid); keys optional
-remove [key1 key2 ...]: remove specified accounts from database
-run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print"""
+status: prints various pieces of information relating to the program's status"""
 
 def arg_parse(args, quarter, verbose):# recursively parse argument list based on quarter (0 = current q) and verbosity
-    
     if len(args) == 0:# base case; if nothing is left to do, exit
         return
     elif args[0] == '-v' or args[0] == '--verbose':
@@ -310,6 +346,9 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
     elif args[0] == '-h' or args[0] == '--help':# if prompted for help menu, print help menu and exit
         print(HELPMENU)
         return
+    elif args[0] == 'status':
+        status()
+        arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'start':
         # get botlist after argument, start daemon, and call arg_parse with the appropriate arguments
         botlist = get_botlist(args[1:])
