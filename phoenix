@@ -8,6 +8,7 @@ import time
 import urllib.request
 import select
 import signal
+import dbm.gnu
 from daemonize import Daemonize
 
 def getPhoenixChecker():# import phoenix checker
@@ -96,7 +97,7 @@ def run(botlist, quiet, verbose, quarter):# start the bots
     
     # sync stuff and close all databases
     stuff.sync()
-    stuff.close()    
+    stuff.close()   
     accounts.close()
 
 
@@ -259,9 +260,13 @@ def check(botlist, quiet, quarter):
     accounts.close()
 
 def status():# print information on status of programd 
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
-    
+    try:# try to open databases
+        accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+        stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    except dbm.gnu.error:# if error is raised, the check is currently executed
+        print("PPE Currently Executing (try again in a little while).")
+        return
+
     try:# try to open pid file
         pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
     except FileNotFoundError:
