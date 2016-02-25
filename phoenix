@@ -150,7 +150,8 @@ def run(botlist, quiet, verbose, quarter):# start the bots
         accounts.sync()
         accounts.close()
         
-        # sync stuff database (botlist)
+        # sync stuff database (botlist), shelve time for scheduled change
+        stuff['schedule'] = time.time() + sleepInterval
         stuff.close()
 
         #sleep for specified time
@@ -257,7 +258,10 @@ def check(botlist, quiet, quarter):
     accounts.sync()
     accounts.close()
 
-def status():# print information on status of program
+def status():# print information on status of programd 
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    
     try:# try to open pid file
         pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
     except FileNotFoundError:
@@ -266,19 +270,41 @@ def status():# print information on status of program
     else:
         print("Daemon: running (PID=" + str(pid) + ")")
         running = True
+    
+        # find time until check
+        scheduledTime = stuff['schedule']
+        timeUntilRun = int(scheduledTime - time.time())
 
+        formTime = ""
+        # get string for formatted time
+        if(timeUntilRun > 60*60*24):
+            formTime += " " + str(timeUntilRun//(3600*24)) + " days"
+            timeUntilRun %= (3600*24)
+        if(timeUntilRun > 60*60):
+            formTime += " " + str(timeUntilRun//3600) + " hours"
+            timeUntilRun %= 3600
+        if(timeUntilRun > 60):
+            formTime += " " + str(timeUntilRun//60) + " minutes"
+            timeUntilRun %= 60
+        formTime += " " + str(timeUntilRun) + " seconds"
+
+        print("Next scheduled check in" + formTime + ".")
+
+    #log bots
     print("The following bots are logged (R = running):")
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
-    for key in accounts.keys():
+    for key in accounts.keys():# iterate through all keys
         runningLetter = ''
-        if running:
+        if running:# if it's running, iterate through all keys, adding (R) if in running botlist
             for runningKey in stuff['botlist']:
                 if runningKey == key:
                     runningLetter = '(R)'
                     break
         
         print(runningLetter + '\t' + key)
+    
+    # close databases
+    accounts.close()
+    stuff.close()
 
 
 def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
