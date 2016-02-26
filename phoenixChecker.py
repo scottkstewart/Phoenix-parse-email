@@ -8,7 +8,6 @@ import imp
 from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from copy import deepcopy
 
 class phoenixChecker(object):
     def __init__(self, user, password, email): #initializes variables and updates
@@ -77,10 +76,10 @@ class phoenixChecker(object):
             
             #set all data
             tempClasses[ind].setURL(cl.getURL()[quarter-1], quarter)
-            tempClasses[ind].setDenominator(cl.getDenominator())
-            tempClasses[ind].setNumerator(cl.getNumerator())
+            tempClasses[ind].setDenominator(copy.copy(cl.getDenominator()))
+            tempClasses[ind].setNumerator(copy.copy(cl.getNumerator()))
             tempClasses[ind].setGrade(cl.getGrade()[quarter-1], quarter)
-            tempClasses[ind].setAssignments(cl.getAssignments())
+            tempClasses[ind].setAssignments(copy.deepcopy(cl.getAssignments()))
         
         #update
         self.update(quarter)
