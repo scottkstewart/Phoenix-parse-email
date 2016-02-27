@@ -45,7 +45,7 @@ if [ "$err" != "pip" ];then
     else
         # Otherwise install modules through pip
         echo "Installing python modules through pip..."
-        sudo pip install -q beautifulsoup4 requests lxml daemonize
+        sudo pip install -q beautifulsoup4 requests lxml daemonize dbm-gnu
     fi
 else
     # Install through pip if available

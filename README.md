@@ -8,13 +8,13 @@ Image above shows example usage; delays/loading time reduced for the sake of dem
 
 Phoenix-parse-email (PPE) is a utility wrote for unix which incorperates several tools to gather, output, and monitor Loudoun County students' grades via the Phoenix Gradebook Client. It does so by storing (shelve) several 'phoenixChecker' objects (accounts.db), each of which contains the URLS to each individual quarter in the gradebook and a list of 8 'phoenixClass' objects. Each of these 'phoenixClass' objects contains lists of 4 (one for each quarter) urls, percentage/letter grades, and lists of assignments. All of this data is manipulated via commands in the 'phoenix' script, which call functions of the 'phoenixChecker' class that are largely dependent on the 'phoenixClass' class. These functions, mainly centered around notifying the user of changes to their grades, tend to send emails from 'phoenixpythonbot@gmail.com' and log changes in the ~/.PPE/log file.
 
-PPE was created initially as a project to learn computer science concepts past the curriculum of AP Computer science, but now serves as a serious utility for checking grades. It now has the functionality to do the following: (add) persistent 'phoenixClass' objects which correspond to a single student account; (check) any or all accounts, with or without email updates; (start) and (kill) daemonized run processes to email differences; (set) intervals between automatic retries in bad connection and between checks with run; (remove) users from database of accounts; and (run) checks on any number of accounts, with or without echoing the grades as they are checked.
+PPE was created initially as a project to learn computer science concepts past the curriculum of AP Computer science, but now serves as a serious utility for checking grades. It now has the functionality to do the following: (add) persistent 'phoenixClass' objects which correspond to a single student account; (check) any or all accounts, with or without email updates; (start) and (kill) daemonized run processes to email differences; view (status) of daemon including accounts being checked and time until next check; (set) intervals between automatic retries in bad connection and between checks with run; (remove) users from database of accounts; and (run) checks on any number of accounts, with or without echoing the grades as they are checked.
 
 Though PPE is a utility designed to be versatile and easy to use, it is not created to be a wide-reaching program for all users; installation is likely to be a bit difficult and support is not likely to ever come to non-unix systems. The fact of the matter is, this is a personal tool, and I can only guarentee compatibility with systems that I've personally seen compatible: linux mint, debian GNU/Linux, and arch linux.
 
 **Dependencies**
 
-Pip for installation, various python modules (beautifulsoup4, requests, lxml, daemonize)
+Pip for installation, various python modules (beautifulsoup4, requests, lxml, daemonize, dbm.gnu)
 
 **Installation:**
 
@@ -24,8 +24,9 @@ git clone https://github.com/scottkstewart/Phoenix-parse-email.git
 cd Phoenix-parse-email
 ./install
 ```
+Occasionally errors have been raised after installation concerning _gdbm; on Arch, no errors were raised, but on debian, a separate "python3-gdbm" package was needed to use dbm.gnu, since dbm.gnu depends on gdbm, which may not exist on some minimal installations. To bypass this without troubleshooting, comment out or delete line 11 in 'phoenix', (import dbm.gnu) and remove the phrase dbm.gnu.error from 268 in 'phoenix' (except dbm.gnu.errror: -> except:). This will allow wider compatibility, but is not an elegant solution; it will end the 'status' command on any exception including KeyboardInterrupt, SystemExit, etc rather than catching the specific error for when the databases are currently busy.
 
-For anybody else: some files may work, but the following functionalities are unix-specific: password masking (getpass), daemonization, and installation through the bash script. Porting to windows requires paths in all files to be rewritten to folder in program files, and several functionalities will be broken. 
+For anybody else: some files may work, but the following functionalities are unix-specific: password masking (getpass), daemonization, exception handling for busy databases, and installation through the bash script. Porting to windows requires paths in all files to be rewritten to folder in program files, the workaround mentioned in the previous paragraph, and several functionalities will be broken. 
 
 
 
@@ -113,6 +114,10 @@ To view the history of a certain user (123456) in a certain class (AP Phoenix Sc
 ```
 cat ~/.PPE/log | grep 737231 | grep 'AP Phoenix Science'
 ```
+
+To start daemon and check status (giving 30 seconds for the initial check to go through)
+```
+phoenix start; sleep 30s; phoenix status
 
 **Autorun**
 
