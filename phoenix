@@ -242,6 +242,7 @@ def check(botlist, quiet, quarter):
     if quiet:
         for bot in bots:# update doesn't include echo or email
             # update all urls for page
+            bot.updatePage()
             bot.urlUpdate()
             # if all quarters are specified, update 1-4, otherwise update specified
             if quarter == -1:
