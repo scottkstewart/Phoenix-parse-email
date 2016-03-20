@@ -64,6 +64,8 @@ check [-n, --no-email] [key1 key2 ...]: check grades, default with email on chan
 
 kill: kills daemon (started by start)
 
+monitor: gives refreshing version of status in real-time
+
 print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades.
 
 remove [key1 key2 ...]: remove specified accounts from database
