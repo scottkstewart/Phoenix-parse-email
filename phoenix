@@ -238,11 +238,15 @@ def check(botlist, quiet, quarter):
     else:
         for key in botlist:
             bots.append(accounts[key])
-    
+   
+    # close database
+    accounts.close()
+
     # iterate through bots, checking each (includes email) if specified, updating each otherwise
     if quiet:
         for bot in bots:# update doesn't include echo or email
             # update all urls for page
+            bot.updatePage()
             bot.urlUpdate()
             # if all quarters are specified, update 1-4, otherwise update specified
             if quarter == -1:
@@ -257,6 +261,13 @@ def check(botlist, quiet, quarter):
                     bot.check(False, False, i)
             else:
                 bot.check(False, False, quarter)
+    
+    # open accounts database
+    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    
+    # add back checked bots
+    for bot in bots:
+        accounts[bot.getUsername()] = bot
 
     # sync and close database
     accounts.sync()
