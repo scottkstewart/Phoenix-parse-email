@@ -9,6 +9,7 @@ import urllib.request
 import select
 import signal
 import dbm.gnu
+import curses
 from daemonize import Daemonize
 
 def getPhoenixChecker():# import phoenix checker
@@ -266,16 +267,16 @@ def status():# print information on status of programd
         accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
         stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
     except dbm.gnu.error:# if error is raised, the check is currently executed
-        print("PPE Currently Executing (try again in a little while).")
-        return
+        return ["PPE Currently Executing (try again in a little while)."]
 
+    out = []
     try:# try to open pid file
         pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
     except FileNotFoundError:
-        print("Daemon: not currently running.")
+        out.append("Daemon: not currently running.")
         running = False
     else:
-        print("Daemon: running (PID=" + str(pid) + ")")
+        out.append("Daemon: running (PID=" + str(pid) + ")")
         running = True
     
         # find time until check
@@ -295,10 +296,10 @@ def status():# print information on status of programd
             timeUntilRun %= 60
         formTime += " " + str(timeUntilRun) + " seconds"
 
-        print("Next scheduled check in" + formTime + ".")
+        out.append("Next scheduled check in" + formTime + ".")
 
     #log bots
-    print("The following bots are logged (R = running):")
+    out.append("The following bots are logged (R = running):")
     for key in accounts.keys():# iterate through all keys
         runningLetter = ''
         if running:# if it's running, iterate through all keys, adding (R) if in running botlist
@@ -306,12 +307,56 @@ def status():# print information on status of programd
                 if runningKey == key:
                     runningLetter = '(R)'
                     break
+            runningLetter += '\t'
         
-        print(runningLetter + '\t' + key)
+        out.append(runningLetter + key)
     
     # close databases
     accounts.close()
     stuff.close()
+
+    # return list of strings
+    return out
+
+def monitor(stdscr):
+    # initialize screen using default colors, no cursor
+    stdscr = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    curses.use_default_colors()
+    curses.curs_set(0)
+    # set getch to wait one second (effectively setting refresh rate of monitor)
+    curses.halfdelay(10)
+
+    # initialize data as empty before updating
+    stat = ['','','']
+    size = [0,0]
+    char = curses.ERR
+    while char == curses.ERR:# loop until character is typed (no character after 1s == curses.ERR)
+        # get status and screen size
+        oldStat = stat
+        stat = status()
+        
+        oldsize = size
+        size = stdscr.getmaxyx()
+
+        if len(oldStat) != len(stat) or (len(oldStat) > 2 and (oldStat[2:] != stat[2:] or len(oldStat[1]) > len(stat[1]))) or oldsize != size:# if any changes occur that shrinks the size in any dimension, clear the screen to keep clean output
+            stdscr.clear()
+        
+        # output all lines centered on y axis
+        curRow = int(size[0]/2-len(stat)/2)
+        for line in stat:
+            if line[0]=='\t' or line[0]=='(':# if it's a bot list, let it be flush on left
+                stdscr.addstr(curRow, int(size[1]/2-22), line)
+            else:# otherwise center it on x axis
+                stdscr.addstr(curRow, int(size[1]/2-len(line)/2), line)
+            curRow += 1
+        
+        # update screen
+        stdscr.refresh()
+        
+        # get character (if character is typed this will end the loop)
+        char = stdscr.getch()
 
 
 def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
@@ -379,8 +424,13 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
     elif args[0] == '-h' or args[0] == '--help':# if prompted for help menu, print help menu and exit
         print(HELPMENU)
         return
+    elif args[0] == 'monitor':
+        # wrapper for clean exiting
+        curses.wrapper(monitor)
+        arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'status':
-        status()
+        for line in status():
+            print(line)
         arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'start':
         # get botlist after argument, start daemon, and call arg_parse with the appropriate arguments
