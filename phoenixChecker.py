@@ -124,7 +124,7 @@ class phoenixChecker(object):
             log = logfile.readlines()
             logfile.close()
             if len(log) + len(changes) > 1000:
-                log = log[len(changes):]
+                log = log[(-1000+len(changes)):]
 
             new = []
             for change in changes:

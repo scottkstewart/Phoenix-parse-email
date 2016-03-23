@@ -5,6 +5,7 @@ import sys
 import shelve
 import os
 import time
+import datetime
 import urllib.request
 import select
 import signal
@@ -24,6 +25,21 @@ def getPhoenixClass():# import phoenix course
     #return the class
     return phoenixModule.phoenixClass
 
+def log(messageList):# add list of messages to log **MUST BE LIST, EVEN IF ONE ITEM**
+    # get log
+    logfile = open(os.getenv("HOME") + '/.PPE/runlog', 'r')
+    log = logfile.readlines()
+    logfile.close()
+
+    # truncate if necessary
+    if len(log) + len(messageList) > 1000:
+        log = log[(-1000+len(messageList)):]
+    
+    # write to file
+    logfile = open(os.getenv("HOME") + '/.PPE/runlog', 'w')
+    logfile.write(''.join(log) + "\n".join(messageList) + "\n")
+    logfile.close()
+
 def add(nocontinue):# add user to list of bots
     # open accounts database, set high recursion limit
     accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
@@ -32,6 +48,7 @@ def add(nocontinue):# add user to list of bots
     # import phoenixChecker class
     phoenixChecker = getPhoenixChecker()
 
+    additions = []
     cont = 'y'
     while cont == 'y' or cont == 'Y':# continue to ask additions until user doesn't say 'y'
         # accept user input
@@ -41,14 +58,20 @@ def add(nocontinue):# add user to list of bots
 
         # instantiate bot and shelve (prompt on overwrite)
         if not (username in accounts.keys()) or input("Account " + username + " already exists. Overwrite? (y/n): ").lower() == 'y':
-            bot = phoenixChecker(username, password, email)
-            accounts[username] = bot
+            try:
+                bot = phoenixChecker(username, password, email)
+                accounts[username] = bot
+                additions.append('['+str(datetime.datetime.now())+'] ' + username + ' added to database.')
+            except IndexError:
+                print("Bot not valid (no grades found).")
+                additions.append('['+str(datetime.datetime.now())+'] ' + username + ' attempted to add; bot was found invalid.')
 
         if nocontinue:# if nocontinue is specified, stop after one iteration
             cont = 'n'
         else:# ask for user input to continue or stop
             cont = input("Add another? (y/n): ")
-
+    
+    log(additions)
     accounts.close()
 
 
@@ -139,16 +162,30 @@ def run(botlist, quiet, verbose, quarter):# start the bots
                 else:# if the program continues without input, autotry (interval is over)
                     print('Autotrying...')
 
+        
+        changes = [] 
         # iterate through list of bots, checking each, specifying bool echo as !quiet
         for b in bots:
             # if quarter signifies all, check all quarters, otherwise check the specified quarter
             if quarter == -1:
                 for i in range(1, 5):
-                    b.check(not quiet, verbose, i)
-                    
+                    try:# try block fixes occasional anomalous list error
+                        b.check(not quiet, verbose, i)
+                        changes.append('[' + str(datetime.datetime.now()) + '] ' + b.getUsername() + ' checked for quarter ' + str(i) + '.')
+                    except IndexError:
+                        print("Index error, skipping...")
+                        changes.append('[' + str(datetime.datetime.now()) + '] List index while checking ' + b.getUsername() + ' for quarter ' + str(i) + '.')
             else:
-                b.check(not quiet, verbose, quarter)
+                try:
+                    b.check(not quiet, verbose, quarter)
+                    changes.append('[' + str(datetime.datetime.now()) + '] ' + b.getUsername() + ' checked for quarter ' + str(quarter) + '.')
+                except IndexError:
+                    print("Index error, skipping...")
+                    changes.append('[' + str(datetime.datetime.now()) + '] List index while checking ' + b.getUsername() + ' for quarter ' + str(quarter) + '.')
             accounts[b.getUsername()] = b
+
+        # write changes to log file
+        log(changes)
 
         # sync accounts database with checked bots
         accounts.sync()
