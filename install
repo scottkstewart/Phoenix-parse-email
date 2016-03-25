@@ -63,11 +63,8 @@ echo "Copying files to ~/.PPE/"
 cp phoenixChecker.py ~/.PPE/phoenixChecker.py
 cp phoenixClass.py ~/.PPE/phoenixClass.py
 
-# If log doesn't already exist create one
-if [ ! -r ~/.PPE/log ]; then
-    echo "Creating log file"
-    touch ~/.PPE/log
-fi
+touch ~/.PPE/log
+touch ~/.PPE/runlog
 
 echo "Installing Phoenix-Parse-Email..."
 sudo cp phoenix /usr/bin/phoenix
