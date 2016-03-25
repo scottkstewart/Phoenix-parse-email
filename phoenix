@@ -417,6 +417,7 @@ def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
         # fork process to daemon
         daemon = Daemonize(app="phoenix-parse-email", pid=(os.getenv("HOME") + '/.PPE/ppe.pid'), action=daemonAction)
         print("Forking to daemon (PID file=~/.PPE/ppe.pid)...")
+        log(['['+str(datetime.datetime.now())+'] Daemon started.'])
         daemon.start()
     else:# if the file does exist already, print message and don't fork
         print("PID already exists (" + str(pid) + "). Try 'phoenix kill'")
