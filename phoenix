@@ -148,21 +148,28 @@ def run(botlist, quiet, verbose, quarter):# start the bots
                     autotryTime = str(autotryInterval/60) + ' minutes'
                 else:
                     autotryTime = str(autotryInterval/3600) + ' hours'
+                
+                # if quiet, simply retry after interval andlog
+                if quiet:
+                    time.sleep(autotryInterval)
+                    log(['[' + str(datetime.datetime.now()) + '] Phoenix not loaded, script automatically retried after ' + autotryTime + ' as daemon.'])
+                else:# if not quiet, read input, autotrying on interval    
+                    # print and read input for time specified by autotry interval
+                    print('Phoenix not loaded within 60 seconds. Retry? (Y/n). Will autotry in ' + autotryTime + '.')
+                    i, o, e = select.select([sys.stdin], [], [], autotryInterval)
 
-                # print and read input for time specified by autotry interval
-                print('Phoenix not loaded within 60 seconds. Retry? (Y/n). Will autotry in ' + autotryTime + '.')
-                i, o, e = select.select([sys.stdin], [], [], autotryInterval)
+                    if i:# if there is an input, continue in loop if 'y', exit otherwise
+                        if sys.stdin.readline().strip()[0] == 'y':
+                            print('Retrying...')
+                            log(['[' + str(datetime.datetime.now()) + ']  Phoenix not loaded, script manually retried.'])
+                        else:
+                            print('Exiting')
+                            log(['[' + str(datetime.datetime.now()) + ']  Phoenix not loaded, script manually exited.'])
+                            sys.exit(0)
+                    else:# if the program continues without input, autotry (interval is over)
+                        print('Autotrying...')
+                        log(['[' + str(datetime.datetime.now()) + '] Phoenix not loaded, script automatically retried after ' + autotryTime + '.'])
 
-                if i:# if there is an input, continue in loop if 'y', exit otherwise
-                    if sys.stdin.readline().strip()[0] == 'y':
-                        print('Retrying...')
-                    else:
-                        print('Exiting')
-                        sys.exit(0)
-                else:# if the program continues without input, autotry (interval is over)
-                    print('Autotrying...')
-
-        
         changes = [] 
         # iterate through list of bots, checking each, specifying bool echo as !quiet
         for b in bots:
@@ -430,6 +437,7 @@ def daemon_exit():# kill daemon w/PID ~/.PPE/ppe.pid
     else:# if the file exists, send sigterm to kill it
         os.kill(pid, signal.SIGTERM)
         print("Killed PPE (PID=" + str(pid) + ").")
+        log(['['+str(datetime.datetime.now())+'] Daemon killed.'])
 
 def get_botlist(args):# iterate through arguments to give a list of the keys following a command
     for ind, key in enumerate(args):
