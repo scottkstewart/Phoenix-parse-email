@@ -10,6 +10,7 @@ import urllib.request
 import select
 import signal
 import dbm.gnu
+import traceback
 import curses
 from daemonize import Daemonize
 
@@ -425,7 +426,11 @@ def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
         daemon = Daemonize(app="phoenix-parse-email", pid=(os.getenv("HOME") + '/.PPE/ppe.pid'), action=daemonAction)
         print("Forking to daemon (PID file=~/.PPE/ppe.pid)...")
         log(['['+str(datetime.datetime.now())+'] Daemon started.'])
-        daemon.start()
+        
+        try:
+            daemon.start()
+        except:
+            log(['*'*10 + str(datetime.datetime.now()) + '*'*10, traceback.format_exc()])
     else:# if the file does exist already, print message and don't fork
         print("PID already exists (" + str(pid) + "). Try 'phoenix kill'")
 

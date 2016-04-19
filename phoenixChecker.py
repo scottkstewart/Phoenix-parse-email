@@ -129,11 +129,11 @@ class phoenixChecker(object):
             new = []
             for change in changes:
                 # add change to log
-                new.append('[' + self.username + '] [' + str(datetime.datetime.now()) + '] ' + change[0] + ' ' + change[1])
+                new.append('[' + self.username + '] [' + str(datetime.datetime.now()) + '] Q' str(quarter) + ' ' + change[0] + ' ' + change[1])
                  
                 # print change
                 if echo:
-                    print(change[0] + ' ' + change[1])
+                    print('Q' + quarter + ' ' + change[0] + ' ' + change[1])
                 
                 # add to subject
                 subject += ' ' + change[0]
