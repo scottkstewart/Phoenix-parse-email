@@ -120,10 +120,12 @@ cat ~/.PPE/log | grep 737231 | grep 'AP Phoenix Science'
 To start daemon and check status (giving 30 seconds for the initial check to go through)
 ```
 phoenix start; sleep 30s; phoenix status
-
+```
 **Autorun**
 
-To set the script to run automatically as a daemon, use whatever init system works best for you. For example, a desktop user who uses their computer exclusively through the x window system may want to write in the line 'phoenix start' to their ~/.xinitrc or ~/.xsession file. A user who wants the script to run automatically on a computer which doesn't always have an X session running (not sure about wayland) may want to write a file into /etc/init.d to execute the script on startup.
-
+For constant use with daemon, I use a crontab scheduled every fifteen minutes, The command to edit cron may vary between distrobutions, but the line I use should work anywhere. I use the following:
+```
+*/15 * * * * phoenix start
+```
 
 Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.
