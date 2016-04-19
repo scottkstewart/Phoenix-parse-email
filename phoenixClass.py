@@ -18,7 +18,7 @@ class phoenixClass(object):
         self.denominator = [0 for i in range(4)]
         
         # set lists of grades and assignments lists by quarter
-        self.grade = [0 for i in range(4)]
+        self.grade = ["" for i in range(4)]
         self.assignments = [[] for i in range(4)]
 
     def setName(self, name):# set classname
