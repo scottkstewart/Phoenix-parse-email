@@ -266,6 +266,9 @@ class phoenixChecker(object):
                     self.deurl.append('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
 
                 self.deurl.append(url)
+
+            if len(self.deurl) < 4:
+                self.deurl.append('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
         else:# if no other school, set list of urls to first list
             pageURL = pageURLS[0]
         
@@ -298,6 +301,8 @@ class phoenixChecker(object):
 
             self.urls.append(url)
         
+        if len(self.urls) < 4:
+            self.urls.append('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
         # increment current quarter for human readibility (over list index notation)
         self.currentQuarter += 1
 
