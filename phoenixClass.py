@@ -86,16 +86,16 @@ class phoenixClass(object):
             if score[0].isnumeric():#interpret score as numerator/denominator
                 if score[1] == ' ':
                     num = float(score[0])
-                    denom = float(score[9:])
+                    denom = float(score[9:13])
                 elif score[2] == ' ':
                     num = float(score[0:2])
-                    denom = float(score[10:])
+                    denom = float(score[10:14])
                 elif score[3] == ' ':
                     num = float(score[0:3])
-                    denom = float(score[11:])
+                    denom = float(score[11:15])
                 else:
                     num = float(score[0:4])
-                    denom = float(score[12:])
+                    denom = float(score[12:16])
                 
 
             #add numerator/denominator of assignment to overal num/denom
