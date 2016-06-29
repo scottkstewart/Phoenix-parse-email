@@ -1,4 +1,7 @@
 # Phoenix-parse-email
+
+**NOTE: since the creation of this, I've gotten a lot better with python. I realize now that much of this code is overly complex and generally unpythonic. A full overhall is planned.**
+
 Unix utility which parses the Phoenix gradebook client and emails changes. Runs on at least Python 3.4. Files contained in ~/.PPE/.
 
 ![Example usage](http://i.imgur.com/neM2Kb7.gif)
