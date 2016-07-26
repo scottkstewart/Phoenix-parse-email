@@ -7,9 +7,7 @@ Unix utility which parses the Phoenix gradebook client and emails changes. Runs 
 ![Example usage](http://i.imgur.com/neM2Kb7.gif)
 Image above shows example usage; delays/loading time reduced for the sake of demonstration.
 
-**How it works**
-
-Phoenix-parse-email (PPE) is a utility wrote for unix which incorperates several tools to gather, output, and monitor Loudoun County students' grades via the Phoenix Gradebook Client. It does so by storing (shelve) several 'phoenixChecker' objects (accounts.db), each of which contains the URLS to each individual quarter in the gradebook and a list of 8 'phoenixClass' objects. Each of these 'phoenixClass' objects contains lists of 4 (one for each quarter) urls, percentage/letter grades, and lists of assignments. All of this data is manipulated via commands in the 'phoenix' script, which call functions of the 'phoenixChecker' class that are largely dependent on the 'phoenixClass' class. These functions, mainly centered around notifying the user of changes to their grades, tend to send emails from 'phoenixpythonbot@gmail.com' and log progress in /etc/ppe/runlog and changes in ~/etc/ppe/log.
+**How it works**Phoenix-parse-email (PPE) is a utility wrote for unix which incorperates several tools to gather, output, and monitor Loudoun County students' grades via the Phoenix Gradebook Client. It does so by storing (shelve) several 'phoenixChecker' objects (accounts.db), each of which contains the URLS to each individual quarter in the gradebook and a list of 8 'phoenixClass' objects. Each of these 'phoenixClass' objects contains lists of 4 (one for each quarter) urls, percentage/letter grades, and lists of assignments. All of this data is manipulated via commands in the 'phoenix' script, which call functions of the 'phoenixChecker' class that are largely dependent on the 'phoenixClass' class. These functions, mainly centered around notifying the user of changes to their grades, tend to send emails from 'phoenixpythonbot@gmail.com' and log progress in /etc/ppe/runlog and changes in ~/etc/ppe/log.
 
 PPE was created initially as a project to learn computer science concepts past the curriculum of AP Computer science, but now serves as a serious utility for checking grades. It now has the functionality to do the following: (add) persistent 'phoenixClass' objects which correspond to a single student account; (check) any or all accounts, with or without email updates; (start) and (kill) daemonized run processes to email differences; view (status) of daemon including accounts being checked and time until next check; (set) intervals between automatic retries in bad connection and between checks with run; (remove) users from database of accounts; and (run) checks on any number of accounts, with or without echoing the grades as they are checked.
 
@@ -17,31 +15,15 @@ Though PPE is a utility designed to be versatile and easy to use, it is not crea
 
 **Dependencies**
 
-Pip for installation, various python modules (beautifulsoup4, requests, lxml, daemonize, dbm.gnu)
+various python modules (beautifulsoup4, requests, lxml, daemonize, dbm)
 
 **Installation:**
 
-For unix: run setup.py script (assumes either pip module or compatible pip program are installed). Uninstall with uninstall (-n or --no-purge retains the accounts and settings data for small upgrades).
+For unix: run setup.py script (assumes either pip module or compatible pip program are installed).
 ```
 git clone https://github.com/scottkstewart/Phoenix-parse-email.git
 cd Phoenix-parse-email
-sudo 
-```
-Occasionally errors have been raised after installation concerning _gdbm; on Arch, no errors were raised, but on debian, a separate "python3-gdbm" package was needed to use dbm.gnu, since dbm.gnu depends on gdbm, which may not exist on some minimal installations. To bypass this without troubleshooting, comment out or delete line 11 in 'phoenix', (import dbm.gnu) and remove the phrase dbm.gnu.error from 268 in 'phoenix' (except dbm.gnu.errror: -> except:). This will allow wider compatibility, but is not an elegant solution; it will end the 'status' command on any exception including KeyboardInterrupt, SystemExit, etc rather than catching the specific error for when the databases are currently busy.
-
-
-**Upgrades:**
-
-If on unix, one can upgrade by uninstalling (not necessary on small upgrades), syncing with the repository, and installing again. Uninstall for upgrades that affect set options/phoenixClass.py/phoenixChecker.py. Run the following for a small upgrade (from Phoenix-parse-email folder):
-```
-git pull
-./install
-```
-Or for a larger upgrade (will require accounts to be remade and settings to be set again)
-```
-./uninstall
-git pull
-./install
+sudo python3 setup.py install
 ```
 
 
@@ -112,20 +94,9 @@ To check all users current quarter without email and print all quarters w/assign
 phoenix check --no-email -Q all print -v
 ```
 
-To view the history of a certain user (123456) in a certain class (AP Phoenix Science) by getting sequential output of log file and searching, first for user than for the course
-```
-cat ~/.PPE/log | grep 737231 | grep 'AP Phoenix Science'
-```
-
 To start daemon and check status (giving 30 seconds for the initial check to go through)
 ```
 phoenix start; sleep 30s; phoenix status
-```
-**Autorun**
-
-For constant use with daemon, I use a crontab scheduled every fifteen minutes, The command to edit cron may vary between distrobutions, but the line I use should work anywhere. I use the following:
-```
-*/15 * * * * phoenix start
 ```
 
 Written by Scott Stewart. Email any questions/problems to scottkstewart16@gmail.com.

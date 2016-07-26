@@ -362,7 +362,7 @@ def monitor(stdscr):
         char = stdscr.getch()
 
 
-def daemon_start(botlist=[], quarter=0):# start daemon w/PID ~/.PPE/ppe.pid
+def daemon_start(botlist=[], quarter=0):# start daemon w/PID /etc/ppe/pid
     try:# try to open pid file
         pid = int(open('/etc/ppe/pid').read())
     except FileNotFoundError:# if the file doesn't exist, start daemon
@@ -370,14 +370,14 @@ def daemon_start(botlist=[], quarter=0):# start daemon w/PID ~/.PPE/ppe.pid
         daemonAction = lambda: run(botlist, True, False, quarter)
         
         # fork process to daemon
-        daemon = Daemonize(app="phoenix-parse-email", pid=(os.getenv("HOME") + '/.PPE/ppe.pid'), action=daemonAction)
-        print("Forking to daemon (PID file=~/.PPE/ppe.pid)...")
+        daemon = Daemonize(app="phoenix-parse-email", pid=('/etc/ppe/pid'), action=daemonAction)
+        print("Forking to daemon (PID File at /etc/ppe/pid)...")
         log('['+str(datetime.datetime.now())+'] Daemon started.')
         daemon.start()
     else:# if the file does exist already, print message and don't fork
         print("PID already exists (" + str(pid) + "). Try 'phoenix kill'")
 
-def daemon_exit():# kill daemon w/PID ~/.PPE/ppe.pid
+def daemon_exit():# kill daemon w/PID /etc/ppe/pid
     try:# try to open pid file
         pid = int(open('/etc/ppe/pid').read())
     except FileNotFoundError:# if not found, send a message
