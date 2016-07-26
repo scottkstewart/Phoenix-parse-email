@@ -11,23 +11,14 @@ import select
 import signal
 import dbm.gnu
 import curses
+from ppeMod import (phoenixClass, phoenixChecker)
 from daemonize import Daemonize
 
-def getPhoenixChecker():# import phoenix checker
-    # get module containing class
-    phoenixModule = imp.load_source('phoenixChecker', os.getenv("HOME") + '/.PPE/phoenixChecker.py')
-    #return the class
-    return phoenixModule.phoenixChecker
+'''PPE version 1.0'''
 
-def getPhoenixClass():# import phoenix course
-    # get module containing class
-    phoenixModule = imp.load_source('phoenixClass', os.getenv("HOME") + '/.PPE/phoenixClass.py')
-    #return the class
-    return phoenixModule.phoenixClass
-
-def log(messageList):# add list of messages to log **MUST BE LIST, EVEN IF ONE ITEM**
+def log(messageList):# add single message to log
     # get log
-    logfile = open(os.getenv("HOME") + '/.PPE/runlog', 'r')
+    logfile = open('/etc/ppe/runlog', 'r')
     log = logfile.readlines()
     logfile.close()
 
@@ -35,36 +26,33 @@ def log(messageList):# add list of messages to log **MUST BE LIST, EVEN IF ONE I
     if len(log) + len(messageList) > 1000:
         log = log[(-1000+len(messageList)):]
     
-    # write to file
-    logfile = open(os.getenv("HOME") + '/.PPE/runlog', 'w')
-    logfile.write(''.join(log) + "\n".join(messageList) + "\n")
+    # write to file (ternary to avoid newlining letters of a single string)
+    logfile = open('/etc/ppe/runlog', 'w')
+    logfile.write(''.join(log) + "\n".join(messageList) if hasattr(messageList,'__iter__') and not isinstance(messageList,str) else messageList + "\n")
     logfile.close()
 
-def add(nocontinue):# add user to list of bots
+def add(nocontinue=False):# add user to list of bots
     # open accounts database, set high recursion limit
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    accounts = shelve.open('/etc/ppe/accounts')
     sys.setrecursionlimit(10000)
-
-    # import phoenixChecker class
-    phoenixChecker = getPhoenixChecker()
 
     additions = []
     cont = 'y'
-    while cont == 'y' or cont == 'Y':# continue to ask additions until user doesn't say 'y'
+    while cont.lower() == 'y':# continue to ask additions until user doesn't say 'y'
         # accept user input
         username = input("Username: ")
         password = getpass.getpass("Password: ")
         email = input("Email: ")
 
         # instantiate bot and shelve (prompt on overwrite)
-        if not (username in accounts.keys()) or input("Account " + username + " already exists. Overwrite? (y/n): ").lower() == 'y':
+        if not (username in accounts.keys()) or input("Account {} already exists. Overwrite? (y/n): ".format(username)).lower() == 'y':
             try:
                 bot = phoenixChecker(username, password, email)
                 accounts[username] = bot
-                additions.append('['+str(datetime.datetime.now())+'] ' + username + ' added to database.')
+                additions.append('[{}] {} added to database.'.format(str(datetime.datetime.now()), username))
             except IndexError:
                 print("Bot not valid (no grades found).")
-                additions.append('['+str(datetime.datetime.now())+'] ' + username + ' attempted to add; bot was found invalid.')
+                additions.append('[{}] {} attempted to add; bot was found invalid.'.format(str(datetime.datetime.now()), username))
 
         if nocontinue:# if nocontinue is specified, stop after one iteration
             cont = 'n'
@@ -77,36 +65,32 @@ def add(nocontinue):# add user to list of bots
 
 def formatInput(checkType):# format input for set
     #interpret timeframe and accept interval time
-    if checkType == 's' or checkType == 'S':
+    if checkType.lower() == 's':
         return int(input("How many seconds? "))
-    elif checkType == 'h' or checkType == 'H':
+    elif checkType.lower() == 'h':
         return 60*60*int(input("How many hours? "))
-    elif checkType == 'd' or checkType == 'D':
-        return 60*60*24*int(input("how many days? "))
+    elif checkType.lower() == 'd':
+        return 60*60*24*int(input("How many days? "))
     else:
         return 60 * int(input("How many minutes? "))
 
-def set(interval):# set intervals between events
-    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+def setStuff(interval=True, autotry=True):# set intervals between events
+    stuff = shelve.open('/etc/ppe/stuff')
 
-    if interval == "-i" or interval == "":# if -i is specified or no operation specified prompt for interval
+    if interval:# if -i is specified or no operation specified prompt for interval
         stuff['interval'] = formatInput(input("Update interval type ((s)econd, (m)inute, (h)our, (d)ay), default minute: "))
-    if interval == "-t" or interval == "":# if -t is specified or no operation specified prompt for autotry
+    if autotry:# if -t is specified or no operation specified prompt for autotry
         stuff['autotry'] = formatInput(input("Update autotry type ((s)econd, (m)inute, (h)our, (d)ay), default minute: "))
 
     stuff.close()
 
-def run(botlist, quiet, verbose, quarter):# start the bots
+def run(botlist, quiet=False, verbose=False, quarter=0):# start the bots
     # open shelved data set recursion limit
     sys.setrecursionlimit(10000)
 
-    # import phoenixChecker class
-    phoenixChecker = getPhoenixChecker()
-    phoenixClass = getPhoenixClass()
-
     # instantiate list of all used phoenix checkers and shelve list of keys running
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff', writeback=True)
+    accounts = shelve.open('/etc/ppe/accounts')
+    stuff = shelve.open('/etc/ppe/stuff', writeback=True)
     bots = []
     if len(botlist) == 0:# if list of bots is empty check all in accounts database
         for key in list(accounts.keys()):
@@ -128,13 +112,14 @@ def run(botlist, quiet, verbose, quarter):# start the bots
     # checks each account, syncs with shelve, and waits for specified interval
     while True:
         # open accounts
-        accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-        stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+        accounts = shelve.open('/etc/ppe/accounts')
+        stuff = shelve.open('/etc/ppe/stuff')
         
         # get sleep/autotry intervals
         sleepInterval = stuff['interval']
         autotryInterval = stuff['autotry']
-
+        
+        changes = [] 
         # check until the program exits or connects
         while True:
             try: # will exit loop and check if the script connects to phoenix without error (times out after a minute)
@@ -152,7 +137,7 @@ def run(botlist, quiet, verbose, quarter):# start the bots
                 # if quiet, simply retry after interval andlog
                 if quiet:
                     time.sleep(autotryInterval)
-                    log(['[' + str(datetime.datetime.now()) + '] Phoenix not loaded, script automatically retried after ' + autotryTime + ' as daemon.'])
+                    changes.append('[{}] Phoenix not loaded, script automatically retrieved after {}s as daemon.'.format(str(datetime.datetime.now()), autotryTime))
                 else:# if not quiet, read input, autotrying on interval    
                     # print and read input for time specified by autotry interval
                     print('Phoenix not loaded within 60 seconds. Retry? (Y/n). Will autotry in ' + autotryTime + '.')
@@ -161,16 +146,16 @@ def run(botlist, quiet, verbose, quarter):# start the bots
                     if i:# if there is an input, continue in loop if 'y', exit otherwise
                         if sys.stdin.readline().strip()[0] == 'y':
                             print('Retrying...')
-                            log(['[' + str(datetime.datetime.now()) + ']  Phoenix not loaded, script manually retried.'])
+                            changes.append('[' + str(datetime.datetime.now()) + ']  Phoenix not loaded, script manually retried.')
                         else:
                             print('Exiting')
-                            log(['[' + str(datetime.datetime.now()) + ']  Phoenix not loaded, script manually exited.'])
+                            changes.append('[' + str(datetime.datetime.now()) + ']  Phoenix not loaded, script manually exited.')
+                            log(changes)
                             sys.exit(0)
                     else:# if the program continues without input, autotry (interval is over)
                         print('Autotrying...')
-                        log(['[' + str(datetime.datetime.now()) + '] Phoenix not loaded, script automatically retried after ' + autotryTime + '.'])
+                        changes.append('[{}] Phoenix not loaded, script automatically retried after {}s.'.format(str(datetime.datetime.now()), autotryTime))
 
-        changes = [] 
         # iterate through list of bots, checking each, specifying bool echo as !quiet
         for b in bots:
             # if quarter signifies all, check all quarters, otherwise check the specified quarter
@@ -178,17 +163,17 @@ def run(botlist, quiet, verbose, quarter):# start the bots
                 for i in range(1, 5):
                     try:# try block fixes occasional anomalous list error
                         b.check(not quiet, verbose, i)
-                        changes.append('[' + str(datetime.datetime.now()) + '] ' + b.getUsername() + ' checked for quarter ' + str(i) + '.')
+                        changes.append('[{}] {} checked for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
                     except IndexError:
                         print("Index error, skipping...")
-                        changes.append('[' + str(datetime.datetime.now()) + '] List index while checking ' + b.getUsername() + ' for quarter ' + str(i) + '.')
+                        changes.append('[{}] List index while checking {} for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
             else:
                 try:
                     b.check(not quiet, verbose, quarter)
-                    changes.append('[' + str(datetime.datetime.now()) + '] ' + b.getUsername() + ' checked for quarter ' + str(quarter) + '.')
+                    changes.append('[{}] {} checked for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
                 except IndexError:
                     print("Index error, skipping...")
-                    changes.append('[' + str(datetime.datetime.now()) + '] List index while checking ' + b.getUsername() + ' for quarter ' + str(quarter) + '.')
+                    changes.append('[{}] List index while checking {} for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
             accounts[b.getUsername()] = b
 
         # write changes to log file
@@ -205,16 +190,11 @@ def run(botlist, quiet, verbose, quarter):# start the bots
         #sleep for specified time
         time.sleep(sleepInterval)
 
-
-def output(botlist, quiet, verbose, quarter):
+def output(botlist, quiet=False, verbose=False, quarter=0):
     # open shelved data, set recursion limit
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-    stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+    accounts = shelve.open('/etc/ppe/accounts')
+    stuff = shelve.open('/etc/ppe/stuff')
     sys.setrecursionlimit(10000)
-
-    # import phoenixChecker class
-    phoenixChecker = getPhoenixChecker()
-    phoenixClass = getPhoenixClass()
 
     if quiet:# if quiet, list all keys and exit
         for key in list(accounts.keys()):
@@ -247,11 +227,8 @@ def remove(botlist):
         return
 
     # open shelved data, set recursion limit
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    accounts = shelve.open('/etc/ppe/accounts')
     sys.setrecursionlimit(10000)
-
-    # import phoenixChecker class
-    phoenixChecker = getPhoenixChecker()
 
     # iterate through keys, removing if the account exists
     for key in botlist:
@@ -265,14 +242,10 @@ def remove(botlist):
     accounts.close()
 
 
-def check(botlist, quiet, quarter):
+def check(botlist, quiet=False, quarter=0):
     # open shelved data, set recursion limit
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    accounts = shelve.open('/etc/ppe/accounts')
     sys.setrecursionlimit(10000)
-
-    # import phoenixChecker class
-    phoenixChecker = getPhoenixChecker()
-    phoenixClass = getPhoenixClass()
 
     # iterate through keys, removing if the account exists
     bots = []
@@ -302,12 +275,12 @@ def check(botlist, quiet, quarter):
         for bot in bots:# check but don't echo
             if quarter == -1:
                 for i in range(1, 5):
-                    bot.check(False, False, i)
+                    bot.check(quarter=i)
             else:
-                bot.check(False, False, quarter)
+                bot.check(quarter=quarter)
     
     # open accounts database
-    accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
+    accounts = shelve.open('/etc/ppe/accounts')
     
     # add back checked bots
     for bot in bots:
@@ -319,14 +292,14 @@ def check(botlist, quiet, quarter):
 
 def status():# print information on status of programd 
     try:# try to open databases
-        accounts = shelve.open(os.getenv("HOME") + '/.PPE/accounts')
-        stuff = shelve.open(os.getenv("HOME") + '/.PPE/stuff')
+        accounts = shelve.open('/etc/ppe/accounts')
+        stuff = shelve.open('/etc/ppe/stuff')
     except dbm.gnu.error:# if error is raised, the check is currently executed
         return ["PPE Currently Executing (try again in a little while)."]
 
     out = []
     try:# try to open pid file
-        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+        pid = int(open('/etc/ppe/ppe.pid').read())
     except FileNotFoundError:
         out.append("Daemon: not currently running.")
         running = False
@@ -353,19 +326,10 @@ def status():# print information on status of programd
 
         out.append("Next scheduled check in" + formTime + ".")
 
-    #log bots
+    # log bots in the following format: (R if running) key
     out.append("The following bots are logged (R = running):")
-    for key in accounts.keys():# iterate through all keys
-        runningLetter = ''
-        if running:# if it's running, iterate through all keys, adding (R) if in running botlist
-            for runningKey in stuff['botlist']:
-                if runningKey == key:
-                    runningLetter = '(R)'
-                    break
-            runningLetter += '\t'
-        
-        out.append(runningLetter + key)
-    
+    out.extend(('{}{}'.format('{}\t'.format('(R)' if key in stuff['botlist'] else '') if running else '', key) for key in accounts.keys())) 
+
     # close databases
     accounts.close()
     stuff.close()
@@ -414,9 +378,9 @@ def monitor(stdscr):
         char = stdscr.getch()
 
 
-def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
+def daemon_start(botlist, quarter=0):# start daemon w/PID ~/.PPE/ppe.pid
     try:# try to open pid file
-        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+        pid = int(open('/etc/ppe/pid').read())
     except FileNotFoundError:# if the file doesn't exist, start daemon
         # define action for daemon as run w/specified botlist, quiet, quarter
         daemonAction = lambda: run(botlist, True, False, quarter)
@@ -431,7 +395,7 @@ def daemon_start(botlist, quarter):# start daemon w/PID ~/.PPE/ppe.pid
 
 def daemon_exit():# kill daemon w/PID ~/.PPE/ppe.pid
     try:# try to open pid file
-        pid = int(open(os.getenv("HOME") + '/.PPE/ppe.pid').read())
+        pid = int(open('/etc/ppe/pid').read())
     except FileNotFoundError:# if not found, send a message
         print("PID not found (PPE is not currently running).")
     else:# if the file exists, send sigterm to kill it
@@ -466,7 +430,7 @@ set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 start [key1 key2 ...]: forkes run to daemon (PID file=~/.PPE/ppe.pid); keys optional
 status: prints various pieces of information relating to the program's status"""
 
-def arg_parse(args, quarter, verbose):# recursively parse argument list based on quarter (0 = current q) and verbosity
+def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list based on quarter (0 = current q) and verbosity
     if len(args) == 0:# base case; if nothing is left to do, exit
         return
     elif args[0] == '-v' or args[0] == '--verbose':
@@ -501,17 +465,21 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
         arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'set':
         if len(args) != 1 and (args[1] == '-t' or args[1] == '-i'):# include option
-            set(args[1])
+            if args[1] == '-i':
+                setStuff(interval=True)
+            elif args[1] == '-t':
+                setStuff(autotry=True)
+            
             arg_parse(args[2:], quarter, verbose)
         else:# don't include option
-            set('')
+            setStuff()
             arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'add':
         if len(args) > 1 and (args[1] == '-n' or args[1] == '--no-continue'):# include nocontinue
             add(True)
             arg_parse(args[2:], quarter, verbose)
         else:# don't include nocontinue
-            add(False)
+            add()
             arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'remove':
         for i in range(1, len(args) + 1):# count all keys, pass all as list (in$
@@ -553,14 +521,11 @@ def arg_parse(args, quarter, verbose):# recursively parse argument list based on
         check(botlist, quiet, quarter)
         arg_parse(args[start+len(botlist):], quarter, verbose)
     else:# if it's not a valid command exit (-... == option)
-        if args[0][0] == '-':
-            print("PPE: Option '" + args[0] + "' not found. See phoenix --help'")
-        else:
-            print("PPE: Command '" + args[0] + "' not found. See 'phoenix --help'")
+        print("PPE: {} '{}' not found. See 'phoenix --help'".format("Option" if args[0][0] == '-' else "Command", args[0]))
         return
 
 if __name__ == "__main__": # main method; calls method to parse argument list ignoring script name
     if len(sys.argv) == 1:
         print("PPE: No commands entered. See 'phoenix --help'")
     else:
-        arg_parse(sys.argv[1:], 0, False)
+        arg_parse(sys.argv[1:])

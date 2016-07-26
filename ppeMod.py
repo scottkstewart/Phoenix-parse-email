@@ -9,12 +9,121 @@ from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# individual classes
+class phoenixClass(object):
+    def __init__(self, session, name):#instantiate data
+        # set requests session
+        self.session = session
+        
+        # set classname
+        self.name = name
+
+        # set list of urls by quarter
+        self.url = ['' for i in range(4)]
+        
+        # set listss of num/denom by quarter
+        self.numerator = [0 for i in range(4)]
+        self.denominator = [0 for i in range(4)]
+        
+        # set lists of grades and assignments lists by quarter
+        self.grade = ["" for i in range(4)]
+        self.assignments = [[] for i in range(4)]
+
+    def setName(self, name):# set classname
+        self.name = name
+
+    def getName(self):#return course title
+        return self.name
+
+    def setURL(self, url, quarter):#set url to course page by quarter
+        self.url[quarter-1] = url
+
+    def getURL(self):#return url to course page
+        return self.url
+
+    def setNumerator(self, num):# set array of numerators
+        self.numerator = num
+
+    def getNumerator(self):#return numerator to grade
+        return self.numerator
+
+    def setDenominator(self, num):# set array of denominators
+        self.denominator = num
+
+    def getDenominator(self):#return denominator to grade
+        return self.denominator
+
+    def setGrade(self, grade, quarter):#set overall grade by quarter
+        self.grade[quarter-1] = grade
+
+    def getGrade(self):#return overall grade
+        return self.grade
+
+    def setAssignments(self, assignments):#set list of assignments
+        self.assignments = assignments
+    
+    def getAssignments(self):#return list of assignments
+        return self.assignments
+
+    def printAssignments(self, quarter):
+        for assignment in self.assignments[quarter-1]:
+            print("------>\t" + assignment[0] + ": " + assignment[1])
+
+    def update(self, quarter):#update assignments/num/denom
+        #instantiate session/get page
+        page = self.session.get(self.url[quarter-1])
+        req = BeautifulSoup(page.text, 'lxml')
+        tempTable = req.findAll('table', {'class':'info_tbl'})
+        
+        if len(tempTable) == 3:#workaround for weight tables in weighted classes
+            rows = tempTable[1].findAll('tr')
+        else:
+            rows = tempTable[0].findAll('tr')
+        
+        #set num/denom to 0
+        self.numerator[quarter-1] = self.denominator[quarter-1] = 0
+
+        ind = 0
+
+        for tr in rows[2:-1]:#iterate through each assignment
+            cols = tr.findAll('td')
+
+            num = denom = 0
+
+            score = cols[4].text
+            if score[0].isnumeric():#interpret score as numerator/denominator
+                if score[1] == ' ':
+                    num = float(score[0])
+                    denom = float(score[9:13])
+                elif score[2] == ' ':
+                    num = float(score[0:2])
+                    denom = float(score[10:14])
+                elif score[3] == ' ':
+                    num = float(score[0:3])
+                    denom = float(score[11:15])
+                else:
+                    num = float(score[0:4])
+                    denom = float(score[12:16])
+                
+
+            #add numerator/denominator of assignment to overal num/denom
+            self.numerator[quarter-1] += num
+            self.denominator[quarter-1] += denom
+            
+            #instantiate assignment as list
+            assignment = [cols[1].text, '({}/{})'.format(str(num), str(denom))]
+            
+            #if it's new, either add to or replace from assignment list1
+            if ind >= len(self.assignments[quarter-1]):
+                self.assignments[quarter-1].append(assignment)
+            elif self.assignments[quarter-1][ind] != assignment:
+                self.assignments[quarter-1][ind] = assignment
+
+            ind += 1
+
+# individual student
 class phoenixChecker(object):
     def __init__(self, user, password, email): #initializes variables and updates
-        # get phoenixClass class
-        phoenixModule = imp.load_source('phoenixClass', os.getenv("HOME") + '/.PPE/phoenixClass.py'    )
-        self.phoenixClass = phoenixModule.phoenixClass
-
         # instantiate requests session for web parsing
         self.session = requests.session()
         
@@ -57,7 +166,7 @@ class phoenixChecker(object):
     def getEmail(self):# returns email
         return self.email
 
-    def check(self, echo, verbose, quarter):#checks for changes
+    def check(self, echo=False, verbose=False, quarter=0):#checks for changes
         # update all urls for gradebook pages (not classes)
         self.updatePage()
         self.urlUpdate()
@@ -72,7 +181,7 @@ class phoenixChecker(object):
         #create deep copy of classes
         for ind, cl in enumerate(self.classes):
             #create class
-            tempClasses.append(self.phoenixClass(self.session, cl.getName()))
+            tempClasses.append(phoenixClass(self.session, cl.getName()))
             
             #set all data
             tempClasses[ind].setURL(cl.getURL()[quarter-1], quarter)
@@ -96,7 +205,6 @@ class phoenixChecker(object):
                 
             #if numerator/denominator are different, log assignment changes
             if classO.getNumerator() != classN.getNumerator() or classO.getDenominator() != classN.getDenominator():
-                
                 #clears changes to this particular class
                 newAs = []
                 for assignment in classN.getAssignments()[quarter-1]:#iterates through assignments
@@ -104,14 +212,14 @@ class phoenixChecker(object):
 
                     for temp in classO.getAssignments()[quarter-1]:#if it matches any, it isn't new
                         if assignment[0] == temp[0] and assignment[1] == temp[1]:
-                            new = False    
+                            new = False
+                            break
 
                     if new:#if it's new, add it to the list of new assignments
                         newAs.append([assignment[0], assignment[1]])
                 
                 #add change to log
-                changes.append([classO.getName(), classO.getGrade()[quarter-1] +  ' (' + str(classO.getNumerator()[quarter-1]) + '/' + str(classO.getDenominator()[quarter-1]) + ') -> ' + classN.getGrade()[quarter-1] + ' (' + str(classN.getNumerator()[quarter-1]) + '/' + str(classN.getDenominator()[quarter-1]) + ')', newAs])
-        
+                changes.append((classO.getName(), '{} ({}/{}) -> {} ({}/{})'.format(str(classO.getGrade()[quarter-1]), str(classO.getNumerator()[quarter-1]), str(classO.getDenominator()[quarter-1]), str(classN.getGrade()[quarter-1]), str(classN.getNumerator()[quarter-1]), str(classN.getDenominator()[quarter-1]), newAs)))
         if changes == []: #if blank, do nothing
             if echo:
                 print('No Changes')
@@ -129,21 +237,21 @@ class phoenixChecker(object):
             new = []
             for change in changes:
                 # add change to log
-                new.append('[' + self.username + '] [' + str(datetime.datetime.now()) + '] Q' + str(quarter) + ' ' + change[0] + ' ' + change[1])
-                 
+                new.append('[{}] [{}] Q{} {} {}'.format(self.username, str(datetime.datetime.now()), str(quarter), change[0], change[1]))
+
                 # print change
                 if echo:
-                    print('Q' + quarter + ' ' + change[0] + ' ' + change[1])
+                    print('Q{} {} {}'.format(quarter, change[0], change[1]))
                 
                 # add to subject
                 subject += ' ' + change[0]
                 
                 #give overview of course
-                message += '\n\n' + change[0] + ':\n' + change[1]
+                message += '\n\n{}:\n{}'.format(change[0], change[1])
                 
                 #add individual assignment changes
                 for assignment in change[2]:
-                    message += '\n' + assignment[0] + ': ' + assignment[1]
+                    message += '\n{}: {}'.format(assignment[0], assignment[1])
            
             # overwrite log file with new file
             logfile = open(os.getenv("HOME") + '/.PPE/log', 'w')
@@ -189,7 +297,7 @@ class phoenixChecker(object):
         #log in
         logPage = self.session.post('https://portal.lcps.org/Login_Student_PXP.aspx', data=data, headers=headers)
 
-    def update(self, quarter):
+    def update(self, quarter=0):
         # if current quarter is specified, prep for that
         if quarter == 0:
             quarter = self.currentQuarter
@@ -222,7 +330,7 @@ class phoenixChecker(object):
                 parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
                 #if new class, add it to the list
                 if count >= len(self.classes):                     
-                    self.classes.append(self.phoenixClass(self.session, parenMinus.group()))
+                    self.classes.append(phoenixClass(self.session, parenMinus.group()))
                 
                 # update grade/url
                 self.classes[count].setGrade(mp2, quarter)
@@ -306,7 +414,7 @@ class phoenixChecker(object):
         # increment current quarter for human readibility (over list index notation)
         self.currentQuarter += 1
 
-    def printGrades(self, quarter, verbose):#prints summary of grades
+    def printGrades(self, quarter=0, verbose=False):#prints summary of grades
         if quarter == 0:
             quarter = self.currentQuarter
         #print the current time
@@ -317,7 +425,7 @@ class phoenixChecker(object):
         
         #per class, print name and vertically aligned grades/num/denom
         for cl in self.classes:
-            print(cl.getName() + ': ' + '\t'*(3 - int((len(cl.getName())+2)/8)) + str(cl.getGrade()[quarter-1]) + ' (' + str(cl.getNumerator()[quarter-1]) + '/' + str(cl.getDenominator()[quarter-1]) + ')')
+            print('{}:{}{} ({}/{})'.format(cl.getName(), '\t'*(3 - int((len(cl.getName())+2)/8)), str(cl.getGrade()[quarter-1]), str(cl.getNumerator()[quarter-1]), str(cl.getDenominator()[quarter-1])))
             if verbose:# if verbosity is specified, print individual assignments
                 cl.printAssignments(quarter)
         print('*'*48)
