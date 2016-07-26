@@ -272,19 +272,23 @@ def check(botlist=[], quiet=False, quarter=0):
     # close database
     data.close()
 
-def status():# print information on status of programd 
+def status(quiet=False):# print information on status of programd 
     try:# try to open database
         data = shelve.open('/etc/ppe/data')
     except dbm.gnu.error:# if error is raised, the check is currently executed
-        return ["PPE Currently Executing (try again in a little while)."]
+        return "Executing" if quiet else ["PPE Currently Executing (try again in a little while)."]
 
     out = []
     try:# try to open pid file
         pid = int(open('/etc/ppe/pid').read())
     except FileNotFoundError:
+        if quiet:
+            return 'Not running'
         out.append("Daemon: not currently running.")
         running = False
     else:
+        if quiet:
+            return 'Running'
         out.append("Daemon: running (PID=" + str(pid) + ")")
         running = True
     
@@ -431,9 +435,13 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
         curses.wrapper(monitor)
         arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'status':
-        for line in status():
-            print(line)
-        arg_parse(args[1:], quarter, verbose)
+        if len(args) != 1 and (args[1] == '-q' or args[1] == '--quiet'):
+            print(status(True))
+            arg_parse(args[2:], quarter, verbose)
+        else:
+            for line in status():
+                print(line)
+            arg_parse(args[1:], quarter, verbose)
     elif args[0] == 'start':
         # get botlist after argument, start daemon, and call arg_parse with the appropriate arguments
         botlist = get_botlist(args[1:])
@@ -481,9 +489,9 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
         botlist = get_botlist(args[start:])
         if args[0] == 'run':
             run(botlist, quiet, verbose, quarter)
-        else:
+        elif args[0] == 'print':
             output(botlist, quiet, verbose, quarter)
-        
+
         # call arg_parse with appropriate arguments
         arg_parse(args[start+len(botlist):], quarter, verbose)
     elif args[0] == 'check':

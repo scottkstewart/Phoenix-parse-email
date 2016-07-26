@@ -8,4 +8,3 @@ setup(name='PPE',
       requires=['beautifulsoup4', 'requests', 'lxml', 'daemonize', 'dbm'],
       py_modules=['ppeMod'])
 os.system("mkdir /etc/ppe; touch /etc/ppe/log; touch /etc/ppe/runlog; chmod 777 -Rf /etc/ppe; cp phoenix /usr/bin/phoenix")
-
