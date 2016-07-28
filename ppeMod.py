@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # individual classes
-class phoenixClass(object):
+class PhoenixClass(object):
     def __init__(self, session, name):#instantiate data
         # set requests session
         self.session = session
@@ -122,8 +122,8 @@ class phoenixClass(object):
             ind += 1
 
 # individual student
-class phoenixChecker(object):
-    def __init__(self, user, password, email): #initializes variables and updates
+class PhoenixChecker(object):
+    def __init__(self, user, password, email, classes=[]): #initializes variables and updates
         # instantiate requests session for web parsing
         self.session = requests.session()
         
@@ -138,7 +138,7 @@ class phoenixChecker(object):
         self.urls = []
         
         # instantiate array of classes
-        self.classes = []
+        self.classes = classes
         
         # log in and set urls
         self.updatePage()
@@ -181,7 +181,7 @@ class phoenixChecker(object):
         #create deep copy of classes
         for ind, cl in enumerate(self.classes):
             #create class
-            tempClasses.append(phoenixClass(self.session, cl.getName()))
+            tempClasses.append(PhoenixClass(self.session, cl.getName()))
             
             #set all data
             tempClasses[ind].setURL(cl.getURL()[quarter-1], quarter)
@@ -330,7 +330,7 @@ class phoenixChecker(object):
                 parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
                 #if new class, add it to the list
                 if count >= len(self.classes):                     
-                    self.classes.append(phoenixClass(self.session, parenMinus.group()))
+                    self.classes.append(PhoenixClass(self.session, parenMinus.group()))
                 
                 # update grade/url
                 self.classes[count].setGrade(mp2, quarter)
@@ -425,7 +425,7 @@ class phoenixChecker(object):
         
         #per class, print name and vertically aligned grades/num/denom
         for cl in self.classes:
-            print('{}:{}{} ({}/{})'.format(cl.getName(), '\t'*(3 - int((len(cl.getName())+2)/8)), str(cl.getGrade()[quarter-1]), str(cl.getNumerator()[quarter-1]), str(cl.getDenominator()[quarter-1])))
+            print('{}:{}{} ({}/{})'.format(cl.getName(), '\t'*(3 - int((len(cl.getName())+2)/8)), cl.getGrade()[quarter-1], str(cl.getNumerator()[quarter-1]), str(cl.getDenominator()[quarter-1])))
             if verbose:# if verbosity is specified, print individual assignments
                 cl.printAssignments(quarter)
         print('*'*48)

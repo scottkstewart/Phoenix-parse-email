@@ -11,7 +11,7 @@ import select
 import signal
 import dbm.gnu
 import curses
-from ppeMod import (phoenixClass, phoenixChecker)
+from ppeMod import (PhoenixClass, PhoenixChecker)
 from daemonize import Daemonize
 
 def log(messageList):# add single message to log
@@ -50,7 +50,7 @@ def add(nocontinue=False):# add user to list of bots
         # instantiate bot and shelve (prompt on overwrite)
         if not (username in accounts.keys()) or input("Account {} already exists. Overwrite? (y/n): ".format(username)).lower() == 'y':
             try:
-                bot = phoenixChecker(username, password, email)
+                bot = PhoenixChecker(username, password, email)
                 accounts[username] = bot
                 additions.append('[{}] {} added to database.'.format(str(datetime.datetime.now()), username))
             except IndexError:

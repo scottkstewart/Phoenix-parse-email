@@ -7,7 +7,9 @@ Unix utility which parses the Phoenix gradebook client and emails changes. Runs 
 ![Example usage](http://i.imgur.com/neM2Kb7.gif)
 Image above shows example usage; delays/loading time reduced for the sake of demonstration.
 
-**How it works**Phoenix-parse-email (PPE) is a utility wrote for unix which incorperates several tools to gather, output, and monitor Loudoun County students' grades via the Phoenix Gradebook Client. It does so by storing (shelve) several 'phoenixChecker' objects (accounts.db), each of which contains the URLS to each individual quarter in the gradebook and a list of 8 'phoenixClass' objects. Each of these 'phoenixClass' objects contains lists of 4 (one for each quarter) urls, percentage/letter grades, and lists of assignments. All of this data is manipulated via commands in the 'phoenix' script, which call functions of the 'phoenixChecker' class that are largely dependent on the 'phoenixClass' class. These functions, mainly centered around notifying the user of changes to their grades, tend to send emails from 'phoenixpythonbot@gmail.com' and log progress in /etc/ppe/runlog and changes in ~/etc/ppe/log.
+**How it works**
+
+Phoenix-parse-email (PPE) is a utility wrote for unix which incorperates several tools to gather, output, and monitor Loudoun County students' grades via the Phoenix Gradebook Client. It does so by storing (shelve) several 'phoenixChecker' objects (accounts.db), each of which contains the URLS to each individual quarter in the gradebook and a list of 8 'phoenixClass' objects. Each of these 'phoenixClass' objects contains lists of 4 (one for each quarter) urls, percentage/letter grades, and lists of assignments. All of this data is manipulated via commands in the 'phoenix' script, which call functions of the 'phoenixChecker' class that are largely dependent on the 'phoenixClass' class. These functions, mainly centered around notifying the user of changes to their grades, tend to send emails from 'phoenixpythonbot@gmail.com' and log progress in /etc/ppe/runlog and changes in /etc/ppe/log.
 
 PPE was created initially as a project to learn computer science concepts past the curriculum of AP Computer science, but now serves as a serious utility for checking grades. It now has the functionality to do the following: (add) persistent 'phoenixClass' objects which correspond to a single student account; (check) any or all accounts, with or without email updates; (start) and (kill) daemonized run processes to email differences; view (status) of daemon including accounts being checked and time until next check; (set) intervals between automatic retries in bad connection and between checks with run; (remove) users from database of accounts; and (run) checks on any number of accounts, with or without echoing the grades as they are checked.
 
@@ -15,7 +17,7 @@ Though PPE is a utility designed to be versatile and easy to use, it is not crea
 
 **Dependencies**
 
-various python modules (beautifulsoup4, requests, lxml, daemonize, dbm)
+Various python modules (beautifulsoup4, requests, lxml, daemonize, dbm).
 
 **Installation:**
 
