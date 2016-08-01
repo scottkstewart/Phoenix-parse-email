@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import imp
+import errno
 import getpass
 import sys
 import shelve
@@ -380,10 +381,15 @@ def daemon_start(botlist=[], quarter=0):# start daemon w/PID /etc/ppe/pid
 def daemon_exit():# kill daemon w/PID /etc/ppe/pid
     try:# try to open pid file
         pid = int(open('/etc/ppe/pid').read())
+        os.kill(pid, 0)
     except FileNotFoundError:# if not found, send a message
         print("PID not found (PPE is not currently running).")
+    except OSError as err:
+        if err.errno == errno.ESRCH:
+            os.remove('/etc/ppe/pid')
+        else:
+            raise
     else:# if the file exists, send sigterm to kill it
-        os.kill(pid, signal.SIGTERM)
         print("Killed PPE (PID=" + str(pid) + ").")
         log('['+str(datetime.datetime.now())+'] Daemon killed.')
 
