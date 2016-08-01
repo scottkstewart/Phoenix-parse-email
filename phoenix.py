@@ -88,7 +88,7 @@ def setStuff(interval=True, autotry=True):# set intervals between events
 
     data.close()
 
-def run(botlist=[], quiet=False, verbose=False, quarter=0):# start the bots
+def run(botlist=[], quiet=False, verbose=False, email=True, quarter=0):# start the bots
     # open shelved data set recursion limit
     sys.setrecursionlimit(10000)
 
@@ -153,16 +153,27 @@ def run(botlist=[], quiet=False, verbose=False, quarter=0):# start the bots
         for b in bots:
             # if quarter signifies all, check all quarters, otherwise check the specified quarter
             if quarter == -1:
+                if not email:
+                    b.updatePage()
+                    b.urlUpdate()
                 for i in range(1, 5):
                     try:# try block fixes occasional anomalous list error
-                        b.check(not quiet, verbose, i)
+                        if email:
+                            b.check(not quiet, verbose, i)
+                        else:
+                            b.update(i)
                         changes.append('[{}] {} checked for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
                     except IndexError:
                         print("Index error, skipping...")
                         changes.append('[{}] List index while checking {} for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
             else:
                 try:
-                    b.check(not quiet, verbose, quarter)
+                    if email:
+                        b.check(not quiet, verbose, quarter)
+                    else:
+                        b.updatePage()
+                        b.urlUpdate()
+                        b.update(quarter)
                     changes.append('[{}] {} checked for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
                 except IndexError:
                     print("Index error, skipping...")
@@ -363,12 +374,12 @@ def monitor(stdscr):
         char = stdscr.getch()
 
 
-def daemon_start(botlist=[], quarter=0):# start daemon w/PID /etc/ppe/pid
+def daemon_start(botlist=[], email=True, quarter=0):# start daemon w/PID /etc/ppe/pid
     try:# try to open pid file
         pid = int(open('/etc/ppe/pid').read())
     except FileNotFoundError:# if the file doesn't exist, start daemon
         # define action for daemon as run w/specified botlist, quiet, quarter
-        daemonAction = lambda: run(botlist, True, False, quarter)
+        daemonAction = lambda: run(botlist, quiet=True, email=email, quarter=quarter)
         
         # fork process to daemon
         daemon = Daemonize(app="phoenix-parse-email", pid=('/etc/ppe/pid'), action=daemonAction)
@@ -417,7 +428,7 @@ print [-q, --quiet] [key1 key2 ...]: print all keys (-q, --quiet) or grades
 remove [key1 key2 ...]: remove specified accounts from database
 run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no print
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
-start [key1 key2 ...]: forkes run to daemon (PID file=~/.PPE/ppe.pid); keys optional
+start [-n, --no-email] [key1 key2 ...]: forkes run to daemon (PID file=~/.PPE/ppe.pid); keys optional
 status: prints various pieces of information relating to the program's status"""
 
 def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list based on quarter (0 = current q) and verbosity
@@ -448,10 +459,6 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
             for line in status():
                 print(line)
             arg_parse(args[1:], quarter, verbose)
-    elif args[0] == 'start':
-        # get botlist after argument, start daemon, and call arg_parse with the appropriate arguments
-        botlist = get_botlist(args[1:])
-        daemon_start(botlist, quarter)
         arg_parse(args[1+len(botlist):], quarter, verbose)
     elif args[0] == 'kill':
         # kill daemon and call arg_parse
@@ -500,7 +507,7 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
 
         # call arg_parse with appropriate arguments
         arg_parse(args[start+len(botlist):], quarter, verbose)
-    elif args[0] == 'check':
+    elif args[0] == 'check' or args[0] == 'start':
         # set boolean quiet to whether quiet output is specified
         quiet = len(args) > 1 and (args[1] == '-n' or args[1] == '--no-email')
 
@@ -510,9 +517,12 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
         else:
             start = 1
         
-        # get botlist, call check, and call arg_parse
+        # get botlist, call check or start, and call arg_parse
         botlist = get_botlist(args[start:])
-        check(botlist, quiet, quarter)
+        if args[0] == 'check':
+            check(botlist, quiet, quarter)
+        else:
+            start(botlist, not quiet, quarter)
         arg_parse(args[start+len(botlist):], quarter, verbose)
     else:# if it's not a valid command exit (-... == option)
         print("PPE: {} '{}' not found. See 'phoenix --help'".format("Option" if args[0][0] == '-' else "Command", args[0]))

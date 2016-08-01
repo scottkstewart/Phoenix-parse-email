@@ -58,7 +58,7 @@ run [-q, --quiet] [key1 key2 ...]: run checks; user key(s): selective; -q: no pr
 
 set [-i, -t]: set interval between checks (-i) autotries (-t) or both (blank)
 
-start [key1 key2 ...]: forks run to daemon (PID file=~/.PPE/ppe.pid); keys optional
+start [-n, --no-email] [key1 key2 ...]: forks run to daemon (PID file=~/.PPE/ppe.pid); keys optional
 
 status: prints various pieces of information relating to the program's status
 
