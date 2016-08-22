@@ -27,7 +27,7 @@ def log(messageList):# add single message to log
     
     # write to file (ternary to avoid newlining letters of a single string)
     logfile = open('/etc/ppe/runlog', 'w')
-    logfile.write(''.join(log) + "\n".join(messageList) if hasattr(messageList,'__iter__') and not isinstance(messageList,str) else messageList + "\n")
+    logfile.write(''.join(log) + "\n".join(messageList) + '\n' if hasattr(messageList,'__iter__') and not isinstance(messageList,str) else messageList + "\n")
     logfile.close()
 
 def add(nocontinue=False):# add user to list of bots
@@ -37,6 +37,7 @@ def add(nocontinue=False):# add user to list of bots
         accounts = data['accounts']
     except KeyError:
         accounts = data['accounts'] = dict()
+    data.close()
 
     sys.setrecursionlimit(10000)
 
@@ -63,6 +64,8 @@ def add(nocontinue=False):# add user to list of bots
         else:# ask for user input to continue or stop
             cont = input("Add another? (y/n): ")
     
+    data = shelve.open('/etc/ppe/data')
+    data['accounts'] = accounts
     log(additions)
     data.close()
 
@@ -93,20 +96,19 @@ def run(botlist=[], quiet=False, verbose=False, email=True, quarter=0):# start t
     sys.setrecursionlimit(10000)
 
     # instantiate list of all used phoenix checkers and shelve list of keys running
-    data = shelve.open('/etc/ppe/data', writeback=True)
+    data = shelve.open('/etc/ppe/data')
     if len(botlist) == 0:# if list of bots is empty check all in accounts database
-        bots = (data['accounts'][key] for key in data['accounts'].keys())
+        bots = list(data['accounts'].values())
         data['botlist'] = list(data['accounts'].keys())
     else:# otherwise iterate through all bots in list
-        stuff['botlist'] = botlist
-        bots = (data[key] for key in botlist)
-    
+        data['botlist'] = botlist
+        bots = [data[accounts][key] for key in botlist]
     data.close()
 
     # checks each account, syncs with shelve, and waits for specified interval
     while True:
         # open accounts
-        data = shelve.open('/etc/ppe/data')
+        data = shelve.open('/etc/ppe/data', writeback=True)
         
         # get sleep/autotry intervals
         sleepInterval = data['interval']
@@ -174,10 +176,11 @@ def run(botlist=[], quiet=False, verbose=False, email=True, quarter=0):# start t
                         b.updatePage()
                         b.urlUpdate()
                         b.update(quarter)
-                    changes.append('[{}] {} checked for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
+                    changes.append('[{}] {} checked for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(quarter)))
                 except IndexError:
                     print("Index error, skipping...")
-                    changes.append('[{}] List index while checking {} for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(i)))
+                    changes.append('[{}] List index while checking {} for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(quarter)))
+            print('b')
             data['accounts'][b.getUsername()] = b
 
         # write changes to log file
@@ -207,7 +210,7 @@ def output(botlist=[], quiet=False, verbose=False, quarter=0):
     sys.setrecursionlimit(10000)
 
     if quiet:# if quiet, list all keys and exit
-        for key in list(accounts.keys()):
+        for key in list(data['accounts'].keys()):
             print(key)
         return
 
@@ -231,7 +234,7 @@ def remove(botlist):
         return
 
     # open shelved data, set recursion limit
-    data = shelve.open('/etc/ppe/data')
+    data = shelve.open('/etc/ppe/data', writeback=True)
     sys.setrecursionlimit(10000)
 
     # iterate through keys, removing if the account exists
@@ -389,19 +392,21 @@ def daemon_start(botlist=[], email=True, quarter=0):# start daemon w/PID /etc/pp
     else:# if the file does exist already, print message and don't fork
         print("PID already exists (" + str(pid) + "). Try 'phoenix kill'")
 
-def daemon_exit():# kill daemon w/PID /etc/ppe/pid
+def daemon_exit(sig=0, quiet=False):# kill daemon w/PID /etc/ppe/pid
     try:# try to open pid file
         pid = int(open('/etc/ppe/pid').read())
-        os.kill(pid, 0)
+        os.kill(pid, sig)
     except FileNotFoundError:# if not found, send a message
-        print("PID not found (PPE is not currently running).")
+        if not quiet:
+            print("PID not found (PPE is not currently running).")
     except OSError as err:
         if err.errno == errno.ESRCH:
             os.remove('/etc/ppe/pid')
         else:
             raise
     else:# if the file exists, send sigterm to kill it
-        print("Killed PPE (PID=" + str(pid) + ").")
+        if not quiet:
+            print("Killed PPE (PID=" + str(pid) + ").")
         log('['+str(datetime.datetime.now())+'] Daemon killed.')
 
 def get_botlist(args):# iterate through arguments to give a list of the keys following a command
@@ -501,7 +506,7 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
         # get botlist and call appropriate command
         botlist = get_botlist(args[start:])
         if args[0] == 'run':
-            run(botlist, quiet, verbose, quarter)
+            run(botlist, quiet, verbose, True, quarter)
         elif args[0] == 'print':
             output(botlist, quiet, verbose, quarter)
 
@@ -522,7 +527,7 @@ def arg_parse(args, quarter=0, verbose=False):# recursively parse argument list 
         if args[0] == 'check':
             check(botlist, quiet, quarter)
         else:
-            start(botlist, not quiet, quarter)
+            daemon_start(botlist, not quiet, quarter)
         arg_parse(args[start+len(botlist):], quarter, verbose)
     else:# if it's not a valid command exit (-... == option)
         print("PPE: {} '{}' not found. See 'phoenix --help'".format("Option" if args[0][0] == '-' else "Command", args[0]))

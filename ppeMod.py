@@ -146,7 +146,7 @@ class PhoenixChecker(object):
         
         # update all grades
         for i in range(len(self.urls)):
-            self.update(i)
+            self.update(i+1)
 
     def setUsername(self, user):#sets username
         self.username = user
@@ -316,7 +316,6 @@ class PhoenixChecker(object):
         count = 0
 
         for i in range(len(self.gradeTable)): #iterate through schools
-            
             rows = self.gradeTable[i].findAll('tr') #get rows of table
             for tr in rows[i + 1:]:# workaround for multivariable calculus
                 #get columns per row
@@ -327,7 +326,7 @@ class PhoenixChecker(object):
                 mp2 = cols[5].text
                  
                 #remove parentheses from course title
-                parenMinus = re.search('([\nA-Za-z0-9_:{}",\-\ \. \/\[\]]+)',courseTitle)
+                parenMinus = re.search('([\sA-Za-z0-9_&:{}",\-\ \. \/\[\]]+)',courseTitle)
                 #if new class, add it to the list
                 if count >= len(self.classes):                     
                     self.classes.append(PhoenixClass(self.session, parenMinus.group()))
