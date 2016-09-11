@@ -6,5 +6,5 @@ setup(name='PPE',
       author='Scott Stewart',
       author_email='scottkstewart16@gmail.com',
       requires=['beautifulsoup4', 'requests', 'lxml', 'daemonize', 'dbm'],
-      py_modules=['ppeMod', 'phoenix'])
+      py_modules=['ppe', 'phoenix'])
 os.system("mkdir /etc/ppe; touch /etc/ppe/log; touch /etc/ppe/runlog; chmod 777 -Rf /etc/ppe; cp phoenix.py /usr/bin/phoenix")

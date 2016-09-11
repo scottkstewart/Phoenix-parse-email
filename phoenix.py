@@ -12,7 +12,7 @@ import select
 import signal
 import dbm.gnu
 import curses
-from ppeMod import (PhoenixClass, PhoenixChecker)
+from ppe import (PhoenixClass, PhoenixChecker)
 from daemonize import Daemonize
 
 def log(messageList):# add single message to log
@@ -180,7 +180,6 @@ def run(botlist=[], quiet=False, verbose=False, email=True, quarter=0):# start t
                 except IndexError:
                     print("Index error, skipping...")
                     changes.append('[{}] List index while checking {} for quarter {}.'.format(str(datetime.datetime.now()), b.getUsername(), str(quarter)))
-            print('b')
             data['accounts'][b.getUsername()] = b
 
         # write changes to log file
