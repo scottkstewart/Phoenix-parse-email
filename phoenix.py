@@ -55,9 +55,11 @@ def add(nocontinue=False):# add user to list of bots
                 bot = PhoenixChecker(username, password, email)
                 accounts[username] = bot
                 additions.append('[{}] {} added to database.'.format(str(datetime.datetime.now()), username))
-            except IndexError:
-                print("Bot not valid (no grades found).")
-                additions.append('[{}] {} attempted to add; bot was found invalid.'.format(str(datetime.datetime.now()), username))
+            finally:
+                pass
+            #except IndexError:
+            #    print("Bot not valid (no grades found).")
+            #    additions.append('[{}] {} attempted to add; bot was found invalid.'.format(str(datetime.datetime.now()), username))
 
         if nocontinue:# if nocontinue is specified, stop after one iteration
             cont = 'n'

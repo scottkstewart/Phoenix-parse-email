@@ -26,7 +26,7 @@ class PhoenixClass(object):
         self.denominator = [0 for i in range(4)]
         
         # set lists of grades and assignments lists by quarter
-        self.grade = ["" for i in range(4)]
+        self.grade = ["" for i in range(7)] #q1, 2, 3, 4, s1, s2, f
         self.assignments = [[] for i in range(4)]
 
     def setName(self, name):# set classname
@@ -91,7 +91,10 @@ class PhoenixClass(object):
             rows = tempTable[0].findAll('tr')
 
         #set num/denom to floats
-        self.numerator[quarter-1], self.denominator[quarter-1] = self.getScore(rows[-1].findAll('td')[1].text)
+        if len(rows) > 2:
+            self.numerator[quarter-1], self.denominator[quarter-1] = self.getScore(rows[-1].findAll('td')[1].text)
+        else:
+            self.numerator[quarter-1] = self.denominator[quarter-1] = 0
 
         for ind, tr in enumerate(rows[2:-1]):#iterate through each assignment
             cols = tr.findAll('td')
@@ -208,7 +211,7 @@ class PhoenixChecker(object):
                         newAs.append([assignment[0], assignment[1]])
                 
                 #add change to log
-                changes.append((classO.getName(), '{} ({}/{}) -> {} ({}/{})'.format(str(classO.getGrade()[quarter-1]), str(classO.getNumerator()[quarter-1]), str(classO.getDenominator()[quarter-1]), str(classN.getGrade()[quarter-1]), str(classN.getNumerator()[quarter-1]), str(classN.getDenominator()[quarter-1]), newAs)))
+                changes.append((classO.getName(), '{} ({}/{}) -> {} ({}/{})'.format(str(classO.getGrade()[quarter-1]), str(classO.getNumerator()[quarter-1]), str(classO.getDenominator()[quarter-1]), str(classN.getGrade()[quarter-1]), str(classN.getNumerator()[quarter-1]), str(classN.getDenominator()[quarter-1])), newAs))
         if changes == []: #if blank, do nothing
             if echo:
                 print('No Changes')
@@ -312,7 +315,7 @@ class PhoenixChecker(object):
                      
                 #find course title and grade
                 courseTitle = cols[1].text
-                mp2 = cols[5].text
+                grade = cols[5].text
                  
                 #remove parentheses from course title
                 parenMinus = re.search('([\sA-Za-z0-9_&:{}",\-\ \. \/\[\]]+)',courseTitle)
@@ -321,8 +324,16 @@ class PhoenixChecker(object):
                     self.classes.append(PhoenixClass(self.session, parenMinus.group()))
                 
                 # update grade/url
-                self.classes[count].setGrade(mp2, quarter)
+                self.classes[count].setGrade(grade, quarter)
                 self.classes[count].setURL('https://portal.lcps.org/'+cols[5].find('a')['href'], quarter)
+                
+                # if it's quarter 2/4, update S2 and final grade
+                if quarter == 2:
+                    self.classes[count].setGrade(cols[6].text, 5)   #s1
+                elif quarter == 4:
+                    self.classes[count].setGrade(cols[6].text, 6)   #s2
+                    self.classes[count].setGrade(cols[7].text, 7)   #fg
+                
                 #update num/denom/assignments
                 self.classes[count].update(quarter) 
                     
@@ -333,14 +344,12 @@ class PhoenixChecker(object):
         gradeBook = self.session.get('https://portal.lcps.org/PXP_Gradebook.aspx?AGU=0')
         req =  BeautifulSoup(gradeBook.text, 'lxml')
         pageURLS = req.findAll('div', {'class':'heading_breadcrumb'})
-       
         
         self.currentQuarter = 0
         self.deurl = []
         if len(pageURLS) == 2:# if multiple sets of urls, set urls to quarters for other school
             # set url to later class after this one
             pageURL = pageURLS[1]
-            
             
             rawurls = []
             currentQuarterBool = [True for i in range(4)]
