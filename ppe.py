@@ -69,6 +69,16 @@ class PhoenixClass(object):
         for assignment in self.assignments[quarter-1]:
             print("------>\t" + assignment[0] + ": " + assignment[1])
 
+    def getScore(self, text):
+        '''Helper method to get score from 'n out of n' style strings, returns tuple of numerator,
+        denominator.'''
+        score = re.split(' ', text)
+        if score[0] == '':
+            offset = 1
+        else:
+            offset = 0
+        return (float(score[offset]), float(score[3+offset]))
+
     def update(self, quarter):#update assignments/num/denom
         #instantiate session/get page
         page = self.session.get(self.url[quarter-1])
@@ -79,47 +89,26 @@ class PhoenixClass(object):
             rows = tempTable[1].findAll('tr')
         else:
             rows = tempTable[0].findAll('tr')
-        
-        #set num/denom to 0
-        self.numerator[quarter-1] = self.denominator[quarter-1] = 0
 
-        ind = 0
+        #set num/denom to floats
+        self.numerator[quarter-1], self.denominator[quarter-1] = self.getScore(rows[-1].findAll('td')[1].text)
 
-        for tr in rows[2:-1]:#iterate through each assignment
+        for ind, tr in enumerate(rows[2:-1]):#iterate through each assignment
             cols = tr.findAll('td')
 
-            num = denom = 0
+            if cols[4].text[0].isnumeric():#interpret score as numerator/denominator
+                num, denom = self.getScore(cols[4].text) 
+            else:
+                num = denom = '0'
 
-            score = cols[4].text
-            if score[0].isnumeric():#interpret score as numerator/denominator
-                if score[1] == ' ':
-                    num = float(score[0])
-                    denom = float(score[9:13])
-                elif score[2] == ' ':
-                    num = float(score[0:2])
-                    denom = float(score[10:14])
-                elif score[3] == ' ':
-                    num = float(score[0:3])
-                    denom = float(score[11:15])
-                else:
-                    num = float(score[0:4])
-                    denom = float(score[12:16])
-                
-
-            #add numerator/denominator of assignment to overal num/denom
-            self.numerator[quarter-1] += num
-            self.denominator[quarter-1] += denom
-            
-            #instantiate assignment as list
-            assignment = [cols[1].text, '({}/{})'.format(str(num), str(denom))]
+            #instantiate assignment as tuple
+            assignment = (cols[1].text, '({}/{})'.format(num, denom))
             
             #if it's new, either add to or replace from assignment list1
             if ind >= len(self.assignments[quarter-1]):
                 self.assignments[quarter-1].append(assignment)
             elif self.assignments[quarter-1][ind] != assignment:
                 self.assignments[quarter-1][ind] = assignment
-
-            ind += 1
 
 # individual student
 class PhoenixChecker(object):
@@ -266,7 +255,7 @@ class PhoenixChecker(object):
    
     def updatePage(self):
         #get page
-        req = self.session.get('https://portal.lcps.org/Login_Student_PXP.aspx')
+        req = self.session.get('https://portal.lcps.org/Login_Student_PXP.aspx?regenerateSessionId=True')
         page = BeautifulSoup(req.text, "lxml")
 
         #get viewstate, eventvalidation

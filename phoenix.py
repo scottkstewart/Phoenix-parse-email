@@ -199,9 +199,9 @@ def getBots(botlist=[], data=None):
         data = shelve.open('/etc/ppe/data')
     
     if len(botlist) == 0:
-        return (data['accounts'][key] for key in data['accounts'].keys())
+        return [data['accounts'][key] for key in data['accounts'].keys()]
     else:
-        return (data['accounts'][key] for key in botlist)
+        return [data['accounts'][key] for key in botlist]
 
 def output(botlist=[], quiet=False, verbose=False, quarter=0):
     # open shelved data, set recursion limit
