@@ -90,17 +90,16 @@ class PhoenixClass(object):
         else:
             rows = tempTable[0].findAll('tr')
 
-        #set num/denom to floats
-        if len(rows) > 2:
-            self.numerator[quarter-1], self.denominator[quarter-1] = self.getScore(rows[-1].findAll('td')[1].text)
-        else:
-            self.numerator[quarter-1] = self.denominator[quarter-1] = 0
+        #set num/denom to 0
+        self.numerator[quarter-1] = self.denominator[quarter-1] = 0
 
         for ind, tr in enumerate(rows[2:-1]):#iterate through each assignment
             cols = tr.findAll('td')
 
             if cols[4].text[0].isnumeric():#interpret score as numerator/denominator
-                num, denom = self.getScore(cols[4].text) 
+                num, denom = self.getScore(cols[4].text)
+                self.numerator[quarter-1] += num
+                self.denominator[quarter-1] += denom
             else:
                 num = denom = '0'
 
